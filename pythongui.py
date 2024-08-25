@@ -20,20 +20,28 @@ BİTTİ5- 30 SINIRINA EKSTRA DURUMLAR EKLENECEK -> y_ olayından çözülebilir 
 
 BİTTİ6-SEARCH GETİRİLECEK
 
-EXCEL DOSYASI YÜKLE GETİRİLECEK
-
 BİTTİ7- FİLTRELEME OLAYLARI GETİRİLEBİLİR - İSİME GÖRE, BİTİŞ TARİHİNE GÖRE BUTON
 
-?FİLTERLARDAN SONRA EXCEL TABLOSU NASIL ELDE EDİLİYOR KONTROL LAZİM 
+BİTTİ8- SİLDİKTEN, DÜZENLEDİKTEN SONRA, ARA YAPTIKTAN BİLDİRİM GİTMESİN
+
+BİTTİ9-FİLTERLARDAN SONRA EXCEL TABLOSU NASIL ELDE EDİLİYOR KONTROL LAZİM 
+
+EXCEL DOSYASI YÜKLE GETİRİLECEK
+
 
 ?tabloElemanlariEkle return değerleri kontrolleri lazim
 ?TARİH FORMATLARINA KONTROL LAZİM 
 
-SİLME VE DÜZENLEME DURUMLARI İÇİN YEDEK DB ARADA ALİNABİLİR.
+SİLME VE DÜZENLEME DURUMLARI İÇİN YEDEK DB ARADA ALİNABİLİR. - gunlük tutulacak
 
 DÜZENLE KISMINDA HATA KISMI DÜZENLENECEK
 
-SİLDİKTEN, DÜZENLEDİKTEN SONRA, ARA YAPTIKTAN BİLDİRİM GİTMESİN
+FİLTRELEDİKTEN SONRA TABLO BOYUTU KISMINA BAK?
+
+FİLTERDE SİLİNCE,düzenlenince FİLTEDEYKEN İŞLEM YAPILINCA TÜM ELEMANLARI GÖSTERİYOR 
+
+macde olup burada olmayanlar bak!!!!
+
 '''
 
 '''
@@ -52,12 +60,21 @@ pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui -
 '''
 
 '''
-Sorunlar/Sorular:
+Sorunlar/Sorular /Soylenecekler:
 
+SORUNLAR
 -excel ekleme nedenim tablonun güzel gözükmemeseydi. Uzun bir giriş olduğunda problem oluyor ve ayar yapamiyorum otomatik doldurma fonksiyonu nedenini anlamadığım şekilde düzgün çalışmıyor
 
+
+SORULAR
 -10 gün <= mi < mi?
 
+
+SOYLENECEKLER
+
+-arama sadece tabloda olan veriler üzerinden yapılıyor. bu tüm hepsine mi baksın yoksa sadece tablodakiler kısmı iyi mi bu hem tarih + isim filtrelemesine yarıyor
+
+-FİLTERDE SİLİNCE,düzenlenince FİLTEDEYKEN İŞLEM YAPILINCA TÜM ELEMANLARI GÖSTERİYOR 
 
 '''
 
@@ -107,6 +124,7 @@ class DateTimePicker(QWidget):
         #label2 yerini değiştirme
 
         self.uyari = QLabel("*Database veya Excel Verisi Yüklediğinizde Eski Bilgiler Kaybolur!", self)
+        self.uyari.setStyleSheet("color: blue;")
 
         #isim giris
         self.isimTextbox = QLineEdit("")
@@ -165,8 +183,11 @@ class DateTimePicker(QWidget):
         #Search elemenleri
         self.searchLabel = QLabel("İsim Ara", self)
         self.searchTextbox = QLineEdit("")
-        self.searchButton = QPushButton("Ara")
+        self.searchButton = QPushButton("Tabloda Ara")
         self.searchButton.clicked.connect(self.aramaBasildi)
+        self.searchButton2 = QPushButton("Tümünde Ara")
+        self.searchButton2.clicked.connect(self.aramaBasildi2)
+        
         self.resetButton1 = QPushButton("Aramayı Temizle")
         self.resetButton1.clicked.connect(self.aramaTemizlemeBasildi)
 
@@ -186,6 +207,13 @@ class DateTimePicker(QWidget):
         self.normal.clicked.connect(self.normalBasildi)
         self.all = QPushButton("Tümünü Görüntüle")
         self.all.clicked.connect(self.aramaTemizlemeBasildi)
+
+        #Hata yazma label'ı
+        self.hataLabel = QLabel("", self)
+        self.hataLabel.setStyleSheet("color: red;")
+
+        #self.hataLabel.setText("Hata: Geçersiz giriş!")
+
         
         # left  table align
         # BU BELKİ KALDIRILABİLİR???
@@ -227,11 +255,12 @@ class DateTimePicker(QWidget):
         layout.addWidget(self.listeAll, 0 ,6)
         #layout.addWidget(self.liste, 2, 3, 4, 2)
         layout.addWidget(self.table, 1, 3, 5, 5 )
-        layout.addWidget(self.uyari, 8,0, 1,2)
+        layout.addWidget(self.uyari, 9,0, 1,2)
         #arama yerlestirme
         layout.addWidget(self.searchLabel, 5, 0)
         layout.addWidget(self.searchTextbox, 6, 0,1,2)
         layout.addWidget(self.searchButton, 7,0)
+        layout.addWidget(self.searchButton2, 8,0)
         layout.addWidget(self.resetButton1, 7,1)
 
         layout.addWidget(self.filterLabel, 6, 3)
@@ -241,6 +270,7 @@ class DateTimePicker(QWidget):
         layout.addWidget(self.between10to30, 8, 4)
         layout.addWidget(self.normal, 8, 5)
         layout.addWidget(self.all, 8,6)
+        layout.addWidget(self.hataLabel,6,5,1,2)
 
         # Ana pencereye layout'u ekleme
         self.setLayout(layout)
@@ -260,6 +290,7 @@ class DateTimePicker(QWidget):
         #texti alma
         isim_str = self.isimTextbox.text()
         if isim_str == "":
+            self.hataLabel.setText("Hata: İsim boş olamaz!")
             return
 
         table_size = self.table.rowCount()
@@ -297,6 +328,7 @@ class DateTimePicker(QWidget):
         #self.dct[isim_str] = {'name': isim_str, 'start': start_date_str, 'end': ending_date_str}
 
         if not ret:
+            self.hataLabel.setText("Hata: Lütfen verileri doğru formatta giriniz!")
             return 
         
         con = sqlite3.connect('tablo_verileri.db')
@@ -330,9 +362,16 @@ class DateTimePicker(QWidget):
         #print(self.table.rowCount(),"*",self.getTableLength())
         
         for row in range(self.getTableLength()):
-            name = self.table.item(row, 0).text()
-            start_date = self.table.item(row, 1).text()
-            end_date = self.table.item(row, 2).text()
+            name_item = self.table.item(row, 0)
+            start_date_item = self.table.item(row, 1)
+            end_date_item = self.table.item(row, 2)
+            print(name_item, start_date_item, end_date_item, "*")
+            if name_item == None or start_date_item == None or end_date_item == None:
+                break
+            name = name_item.text()
+            start_date = start_date_item.text()
+            end_date = end_date_item.text()
+            
             #print(name, start_date, end_date, "yoo!")
             ret_dct[name] = {'name': name, 'start': start_date, 'end': end_date}
         return ret_dct
@@ -342,6 +381,7 @@ class DateTimePicker(QWidget):
         df = pd.DataFrame(ret_dict).T
         df.columns = ("İsim", "Başlangıç Tarihi", "Bitiş Tarihi")
         if df.size == 0:
+            self.hataLabel.setText("Hata: Yazılacak Bilgi Yok!")
             return
         df.fillna('', inplace=True)
         filename, _ = QFileDialog.getSaveFileName(self, "Excel dosyasını kaydet", "", "Excel Files (*.xlsx);;All Files (*)")
@@ -349,8 +389,12 @@ class DateTimePicker(QWidget):
             df.to_excel(filename, index=False)
             workbook = load_workbook(filename)
             sheet = workbook.active
+            keys = list(ret_dict.keys())
+
             for y in range(len(ret_dict)):
-                item_text = self.table.item(y,2).text()
+                #item_text = self.table.item(y,2).text()
+                item_text = self.dct[keys[y]]['end']
+                print(item_text, " boom!")
                 dif = self.calculateDif(item_text)
                 if dif.days <= 10:
                     #print("red")
@@ -380,6 +424,9 @@ class DateTimePicker(QWidget):
     def excelTabloOutput(self):
         #print("excel!")
         tablo_dct = self.tabloVerileriEldeEt()
+        if len(tablo_dct) == 0:
+            self.hataLabel.setText("Hata: Tabloda veri yok!")
+            return
         df = pd.DataFrame(tablo_dct).T
         df.columns = ("İsim", "Başlangıç Tarihi", "Bitiş Tarihi")
         if df.size == 0:
@@ -475,16 +522,20 @@ class DateTimePicker(QWidget):
         return datetime.strptime(str, '%d.%m.%Y')
 
     def dateSortFunc(self):
-        self.dct = dict(sorted(self.dct.items(), key=lambda item: self.calculateDif(item[1]['end'])))
+        #DCT DEĞİL TABLOYU ALSIN
+        new_dct = self.tabloVerileriEldeEt()
+
+        new_dct = dict(sorted(new_dct.items(), key=lambda item: self.calculateDif(item[1]['end'])))
         self.tabloTemizleme()
-        self.tablo_guncelle(self.dct)
+        self.tablo_guncelle(new_dct)
         #print("AAAAAAA")
     #self.toDate(item[2])
 
     def NameSortFunc(self):
-       self.dct = dict(sorted(self.dct.items()))
+       new_dct = self.tabloVerileriEldeEt()
+       new_dct= dict(sorted(new_dct.items()))
        self.tabloTemizleme()
-       self.tablo_guncelle(self.dct)
+       self.tablo_guncelle(new_dct)
 
     def isValidDate(self, date):
         date_format = "%d.%m.%Y"
@@ -508,6 +559,12 @@ class DateTimePicker(QWidget):
             #print(self.isValidDate(bas_tarih), self.isValidDate(son_tarih),len(name), "**" )
             #print("HATAAAAAAA")
             #Bu kısma çözüm lazim - çözüm dediğim hatayı göstersin
+            if len(name) != 0:
+                self.hataLabel.setText("Hata: İsim boş olamaz!")
+            elif not self.isValidDate(bas_tarih):
+                self.hataLabel.setText("Hata: Başlangıç Tarihi Formatı Yanlış!")
+            else:
+                self.hataLabel.setText("Hata: Bitiş Tarihi Formatı Yanlış!")
             return 
 
         new_key = self.table.item(c,0).text()
@@ -520,6 +577,7 @@ class DateTimePicker(QWidget):
         self.tabloTemizleme()
         ret = self.tabloElemanlariEkle(False)
         if not ret:
+            self.hataLabel.setText("Hata: Lütfen verileri doğru formatta giriniz!")
             return 
         #veri tabanından veriyi güncelleme
         con = sqlite3.connect('tablo_verileri.db')
@@ -542,6 +600,7 @@ class DateTimePicker(QWidget):
         ret = self.tabloElemanlariEkle(False)
         #print(r,c)
         if not ret:
+            self.hataLabel.setText("Hata: Tablo oluştururken hata meydana geldi!")
             return 
         con = sqlite3.connect('tablo_verileri.db')
         c = con.cursor()
@@ -617,8 +676,8 @@ class DateTimePicker(QWidget):
         con.close()
 
     def tablo_guncelle(self, new_dct):
-        if len(new_dct) == 0:
-            return
+        #if len(new_dct) == 0:
+        #    return
         y_ = 0
         self.tabloTemizleme()
         for key,value in new_dct.items():
@@ -642,8 +701,6 @@ class DateTimePicker(QWidget):
         self.table.resizeColumnsToContents()
         self.table.resizeRowsToContents()
         ret = self.tabloGunKontrol(new_dct, False)
-        if not ret:
-            return
         
         
     def database_yazdir(self):
@@ -662,10 +719,12 @@ class DateTimePicker(QWidget):
         arama_text = self.searchTextbox.text()
         #print(arama_text, "hmhmhm")
         if arama_text == "":
+            self.hataLabel.setText("Hata: Arama boş olamaz!")
             return
         #print("niye giriyor??????")
-        tablo_dict = self.dct
+        tablo_dict = self.tabloVerileriEldeEt()
         if not len(tablo_dict):
+            self.hataLabel.setText("Hata: Tablo boşken arama yapılamaz!")
             return
         self.tabloTemizleme()
         new_dict = {}
@@ -673,6 +732,25 @@ class DateTimePicker(QWidget):
             if arama_text in key:
                 new_dict[key]=value 
         self.tablo_guncelle(new_dct=new_dict)
+
+    def aramaBasildi2(self):
+        arama_text = self.searchTextbox.text()
+        #print(arama_text, "hmhmhm")
+        if arama_text == "":
+            self.hataLabel.setText("Hata: Arama boş olamaz!")
+            return
+        #print("niye giriyor??????")
+        tablo_dict = self.dct
+        if not len(tablo_dict):
+            self.hataLabel.setText("Hata: Veri olmadan arama yapılamaz!")
+            return
+        self.tabloTemizleme()
+        new_dict = {}
+        for key, value in tablo_dict.items():
+            if arama_text in key:
+                new_dict[key]=value 
+        self.tablo_guncelle(new_dct=new_dict)
+
 
     def aramaTemizlemeBasildi(self):
         self.tabloTemizleme()
@@ -714,6 +792,7 @@ class DateTimePicker(QWidget):
         self.tablo_guncelle(ret_dict)
 
     def newDatabase(self):
+        #BURAYA KONTROL GEREKECEK
 
         database_name = None
         if database_name[-3:] != ".db":
