@@ -6,7 +6,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=['PyQt6.QtCore', 'PyQt6.QtGui', 'PyQt6.QtWidgets', 'plyer.platforms.win.notification'],
+    hiddenimports=['PyQt6.QtCore', 'PyQt6.QtGui', 'PyQt6.QtWidgets', 'plyer.platforms.win.notification', 'plyer.platforms.macosx.notification'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -35,10 +35,4 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-)
-app = BUNDLE(
-    exe,
-    name='pythongui.app',
-    icon=None,
-    bundle_identifier=None,
 )
