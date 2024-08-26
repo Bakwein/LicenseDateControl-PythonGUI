@@ -2,3 +2,4 @@ myenv
 build
 dist
 excel_output/*
+db_yedekleme/*
