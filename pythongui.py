@@ -45,10 +45,11 @@ BİTTİ 12 - FİLTRELEDİKTEN SONRA TABLO BOYUTU KISMINA BAK?
 
 BİTTİ 13 - SIRALA BUTONLARI AKTİFLİK GÖSTERİLEBİLİR
 
+BİTTİ 14 GİBİ- EXCEL DOSYASI YÜKLE GETİRİLECEK
 
+BİTTİ 15 GİBİ - DB DOSYASI YÜKLE
 
 --------------
-
 
 --------------
 
@@ -58,28 +59,18 @@ BİTTİ 13 - SIRALA BUTONLARI AKTİFLİK GÖSTERİLEBİLİR
 
 ?HATA OLMADIĞINDA HATA MESAJLARINI SIFIRLA - update gerekebilir
 
-BİTTİ 14 GİBİ- EXCEL DOSYASI YÜKLE GETİRİLECEK
-
-BİTTİ 15 GİBİ - DB DOSYASI YÜKLE
-
-TABLO UZUNLUK OLAYINDA HALA HATA VAR !!!!!!
-
+?oldu mu?TABLO UZUNLUK OLAYINDA HALA HATA VAR !!!!!!
 --------------
 
 ?TARİH FORMATLARINA KONTROL LAZİM  - 
 kontrol func.
 #kontroller olacak burada - sorun varsa false olsun
 
-
-
-
-
 SİLME VE DÜZENLEME DURUMLARI İÇİN YEDEK DB ARADA ALİNABİLİR. - gunlük tutulacak
 
 FİLTERDE SİLİNCE,düzenlenince FİLTEDEYKEN İŞLEM YAPILINCA TÜM ELEMANLARI GÖSTERİYOR 
 
 DÜZENLE YAPILINCA VERİ EN ALTA GİDİYOR BUTON AKTİFLİĞİNE GÖRE SIRALA DÜZENLEYİNCE SONA EKLEME
-
 
 '''
 
@@ -235,6 +226,7 @@ class DateTimePicker(QWidget):
         #header ayari
         header = self.table.horizontalHeader()
         header.setStretchLastSection(True)
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
         for col in range(self.colNo):
             header.setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
         
@@ -431,7 +423,7 @@ class DateTimePicker(QWidget):
         if file_path:
             df = pd.read_excel(file_path, engine="openpyxl")
             #print(df, "*****!****")
-            self.tabloTemizleme()
+            #self.tabloTemizleme()
             #print(df.columns)
             df.columns = ['name', 'start', 'end']
             all_elem = df.to_dict('records')
@@ -446,9 +438,9 @@ class DateTimePicker(QWidget):
             #print(self.dct, " :O")
             #self.tabloBoyutInput(len(self.dct))
             #self.tablo_guncelle(self.dct)
-            print("&&", len(self.dct), "&&")
+            #print("&&", len(self.dct), "&&")
             self.tabloBoyutInput(len(self.dct))
-            self.tabloTemizleme()
+            #self.tabloTemizleme()
             self.tablo_guncelle(new_dct=self.dct, noti=True)
             
             #self.editModeBasildi()
@@ -871,7 +863,10 @@ class DateTimePicker(QWidget):
         #if len(new_dct) == 0:
         #    return
         y_ = 0
+        
         self.tabloTemizleme()
+        self.rowNo = len(new_dct)
+        self.table.setRowCount(self.rowNo)
         print("**********************************")
         for key,value in new_dct.items():
             print(key,value, "!!!!!!!!!!!")
@@ -886,11 +881,9 @@ class DateTimePicker(QWidget):
             but2 = QPushButton("Sil")
             but2.clicked.connect(lambda _, r=4, c=y_: self.tabloButtonSil(r,c))
             self.table.setCellWidget(y_, 4, but2)
-
             y_+=1
-            if (y_ > self.rowNo):
-                self.rowNo = y_
-                self.table.setRowCount(self.rowNo)
+
+                
             
         self.table.resizeColumnsToContents()
         self.table.resizeRowsToContents()
@@ -1040,21 +1033,15 @@ class DateTimePicker(QWidget):
             con = sqlite3.connect(file_path)
             df = pd.read_sql_query("SELECT * FROM tablo_verileri", con)
             con.close()
-
+            self.tabloTemizleme()
             df.columns = ['name', 'start', 'end']
             all_elem = df.to_dict('records')
             new_dct = {}
             for elem in all_elem:
                 new_dct[elem['name']] = {'name': elem['name'], 'start': elem['start'], 'end': elem['end']}
             self.dct = new_dct
-            print("&&&&&")
-            print(len(self.dct))
-            print("&&&&&")
-            print(self.dct)
-            print("&&&&&")
             self.tabloBoyutInput(len(self.dct))
-            print("&ic&", len(self.dct), "&&")
-            self.tabloTemizleme()
+            
             self.tablo_guncelle(new_dct=self.dct, noti=True)
 
             now = datetime.now()
@@ -1127,7 +1114,8 @@ class DateTimePicker(QWidget):
         self.all.setEnabled(bool)
         for row in range(self.table.rowCount()):
             but = self.table.cellWidget(row,3)
-            but.setEnabled(not bool)
+            if but:
+                but.setEnabled(not bool)
 
     def editModeBasildi(self):
         if self.isEditModeOn:
