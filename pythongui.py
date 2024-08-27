@@ -3,7 +3,7 @@ import random
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QDateTimeEdit, QLabel, QPushButton, QLineEdit, QGridLayout, QListWidget, QTableWidget, QHeaderView, QTableWidgetItem, QFileDialog, QDateTimeEdit
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
-from PyQt6.QtCore import QDateTime, Qt, QDate
+from PyQt6.QtCore import QDateTime, Qt, QDate, QFile, QTextStream
 from PyQt6.QtGui import QColor
 import sqlite3
 from datetime import datetime
@@ -11,6 +11,7 @@ import pandas as pd
 from plyer import notification
 import os
 import shutil
+from qt_material import apply_stylesheet
 '''
 
 24.08
@@ -72,7 +73,18 @@ FİLTERDE SİLİNCE,düzenlenince FİLTEDEYKEN İŞLEM YAPILINCA TÜM ELEMANLARI
 
 DÜZENLE YAPILINCA VERİ EN ALTA GİDİYOR BUTON AKTİFLİĞİNE GÖRE SIRALA DÜZENLEYİNCE SONA EKLEME
 
+
+silince sıralama neredeyse orada kalsın
+
 !!!!tablo yazdir kimsi eklenecek
+
+
+videolar tamam sadece bildirim kısmı eklenecek onu da windowsda yaparım ayrıca bir pdf hazırlayabilirm kullanım için
+
+ALTA DA BAK!
+
+
+
 
 '''
 
@@ -89,6 +101,25 @@ pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui -
 pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui --hidden-import=PyQt6.QtWidgets --hidden-import=plyer.platforms.win.notification --hidden-import=plyer.platforms.macosx.notification --noconsole pythongui.py
 
 '''
+'''
+1. Başlatma Klasörüne Kısayol Ekleyin:
+.exe dosyanıza sağ tıklayın ve Kısayol Oluştur seçeneğini seçin.
+Windows + R tuşlarına basarak Çalıştır penceresini açın.
+Çalıştır penceresine shell:startup yazın ve Enter tuşuna basın. Bu, Başlangıç (Startup) klasörünü açacaktır.
+Oluşturduğunuz .exe dosyasının kısayolunu bu klasöre sürükleyip bırakın.
+
+
+2.Kısayol Özelliklerini Düzenleme:
+
+Oluşturduğunuz kısayola sağ tıklayın ve "Özellikler" seçeneğini seçin.
+Açılan pencerede "Kısayol" sekmesine gidin.
+"Çalıştır" seçeneğinin yanında bulunan açılır menüden "Simge Durumuna Küçültülmüş" seçeneğini seçin.
+"Uygula" ve ardından "Tamam" butonlarına tıklayarak değişiklikleri kaydedin.
+
+3.resim eklemeyi yap!!!
+
+'''
+
 
 '''
 Sorunlar/Sorular /Soylenecekler:
@@ -116,10 +147,13 @@ class DateTimePicker(QWidget):
         self.rowNo = 0
         self.isDatePressed = True
         self.isEditModeOn = True
+        self.isDarkActive = True
         self.editDict = {}
+        #self.dark_light_button()
         self.initUI()
         
     def initUI(self):
+
         #klasörler
         current_dir = os.getcwd()
         db_klasor = '/db_yedekleme'
@@ -194,14 +228,17 @@ class DateTimePicker(QWidget):
 
         # Labeller
         self.isim = QLabel("İsim", self)
-        self.label = QLabel("Başlangıç tarihi:", self)
+        self.isim.setStyleSheet("color: #1565C0; font-size:15px; font-weight: bold;")
+        self.label = QLabel("Başlangıç Tarihi:", self)
+        self.label.setStyleSheet("color: #1565C0; font-size:15px; font-weight: bold;")
         self.label2 = QLabel("Bitiş Tarihi:", self)
+        self.label2.setStyleSheet("color: #1565C0; font-size:15px; font-weight: bold;")
         #self.listLabel = QLabel("Listeler:", self)
 
         #label2 yerini değiştirme
 
         self.uyari = QLabel("""*Database veya Excel Verisi Yüklediğinizde Eski Database "db_yedekleme" Klasöründe Yedeklenir""", self)
-        self.uyari.setStyleSheet("color: red;")
+        self.uyari.setStyleSheet("color: #1565C0; font-size:15px; font-weight: bold; font-style: italic;")
 
         #isim giris
         self.isimTextbox = QLineEdit("")
@@ -221,21 +258,22 @@ class DateTimePicker(QWidget):
         self.ending_date.setFixedSize(110,40)
         #buton
 
-        self.button = QPushButton("Ekle")
+        self.button = QPushButton("Ekle", self)
         #sinyal olayi 
+        self.button.setStyleSheet("background-image: linear-gradient(144deg,#AF40FF, #5B42F3 50%,#00DDEB);")
         self.button.clicked.connect(self.butonBasildi)
 
-        self.listeGoster = QPushButton("*Excel Dosyası Yükle")
+        self.listeGoster = QPushButton("*Excel Dosyası Yükle", self)
         #üstüne mi yazsın yoksa tamamen silip yeni veri seti o mu olsun
         self.listeGoster.clicked.connect(self.excelImport)
 
-        self.dbEkle = QPushButton("*Yeni Database Yükle")
+        self.dbEkle = QPushButton("*Yeni Database Yükle", self)
         self.dbEkle.clicked.connect(self.newDatabase)
 
-        self.listeDuzenle = QPushButton("Tabloyu Excel Olarak Çıktı Al")
+        self.listeDuzenle = QPushButton("Tabloyu Excel Olarak Çıktı Al", self)
         self.listeDuzenle.clicked.connect(self.excelTabloOutput)
 
-        self.listeAll = QPushButton("Tüm Verileri Excel Olarak Çıktı Al")
+        self.listeAll = QPushButton("Tüm Verileri Excel Olarak Çıktı Al", self)
         self.listeAll.clicked.connect(self.excelOutput)
 
         #listeleme
@@ -253,61 +291,64 @@ class DateTimePicker(QWidget):
         
         #self.button.clicked.connect(self.butonBasildi)
         self.silLabel = QLabel("Dosyaları Temizleme",self)
+        self.silLabel.setStyleSheet("color: #1565C0; font-size:15px; font-weight: bold;")
 
-        self.yedeklemeDosyaSil = QPushButton(".db Dosyalarını Temizle")
+        self.yedeklemeDosyaSil = QPushButton(".db Dosyalarını Temizle", self)
         self.yedeklemeDosyaSil.clicked.connect(self.yedeklemeDosyaSilFunc1)
 
-        self.yedeklemeDosyaSil2 = QPushButton(".xlsx Dosyalarını Temizle")
+        self.yedeklemeDosyaSil2 = QPushButton(".xlsx Dosyalarını Temizle", self)
         self.yedeklemeDosyaSil2.clicked.connect(self.yedeklemeDosyaSilFunc2)
 
-        self.yedeklemeDosyaSil3 = QPushButton("Tüm Dosyaları Temizle")
+        self.yedeklemeDosyaSil3 = QPushButton("Tüm Dosyaları Temizle", self)
         self.yedeklemeDosyaSil3.clicked.connect(self.yedeklemeDosyaSilFunc3)
         
         #Search elemenleri
         self.searchLabel = QLabel("İsim Ara", self)
+        self.searchLabel.setStyleSheet("color: #1565C0; font-size:15px; font-weight: bold;")
         self.searchTextbox = QLineEdit("")
-        self.searchButton = QPushButton("Tabloda Ara")
+        self.searchButton = QPushButton("Tabloda Ara", self)
         self.searchButton.clicked.connect(self.aramaBasildi)
-        self.searchButton2 = QPushButton("Tümünde Ara")
+        self.searchButton2 = QPushButton("Tümünde Ara", self)
         self.searchButton2.clicked.connect(self.aramaBasildi2)
         
-        self.resetButton1 = QPushButton("Aramayı Temizle")
+        self.resetButton1 = QPushButton("Aramayı Temizle", self)
         self.resetButton1.clicked.connect(self.aramaTemizlemeBasildi)
 
         #Filtreleme 
-        self.filterLabel = QLabel("Filtreleme/Sıralama")
-        self.dateSort = QPushButton("Kalan Güne Göre Sırala")
+        self.filterLabel = QLabel("Filtreleme/Sıralama", self)
+        self.filterLabel.setStyleSheet("color: #1565C0; font-size:15px; font-weight: bold;")
+        self.dateSort = QPushButton("Kalan Güne Göre Sırala", self)
         self.dateSort.clicked.connect(self.dateSortFunc)
-        self.nameSort = QPushButton("İsme Göre Sırala")
+        self.nameSort = QPushButton("İsme Göre Sırala", self)
         self.nameSort.clicked.connect(self.NameSortFunc)
 
         #bunlara da date sort lazim
-        self.onlylast10 = QPushButton("Son 10 Gün") 
+        self.onlylast10 = QPushButton("Son 10 Gün", self) 
         self.onlylast10.clicked.connect(self.son10Goruntule)
-        self.between10to30 = QPushButton("Son 1 Ay")
+        self.between10to30 = QPushButton("Son 1 Ay", self)
         self.between10to30.clicked.connect(self.between1030Basildi)
-        self.normal = QPushButton("1 Aydan Fazla")
+        self.normal = QPushButton("1 Aydan Fazla", self)
         self.normal.clicked.connect(self.normalBasildi)
-        self.all = QPushButton("Tümünü Görüntüle")
+        self.all = QPushButton("Tümünü Görüntüle", self)
         self.all.clicked.connect(self.aramaTemizlemeBasildi)
 
         #Hata yazma label'ı
         self.hataLabel = QLabel("", self)
-        self.hataLabel.setStyleSheet("color: red;")
+        self.hataLabel.setStyleSheet("color: darkred; font-size:15px; font-weight: bold; font-style: italic;")
 
         #self.hataLabel.setText("Hata: Geçersiz giriş!")
 
         #düzenleme modu
-        self.editMode = QPushButton("Düzenleme/İnceleme Modunu Aç/Kapa")
+        self.editMode = QPushButton("Düzenleme/İnceleme Modunu Aç/Kapa", self)
         self.editMode.clicked.connect(self.editModeBasildi)
 
         #uyari
-        self.uyari1 = QLabel("Dosya fazlalığı problemi yaşamamanız için sıklıkla dosyaları temizlemeniz önerilir!", self)
-        self.uyari1.setStyleSheet("color: red;")
+        self.uyari1 = QLabel("UYARI: Dosya fazlalığı problemi yaşamamanız için sıklıkla dosyaları temizlemeniz önerilir!", self)
+        self.uyari1.setStyleSheet("color: #1565C0; font-size:15px; font-weight: bold; font-style: italic;")
 
         #son_tarih
         self.sonTarih = QLabel("Son Silinme Tarihi: Daha Önce Silinmemiş!", self)
-        self.sonTarih.setStyleSheet("color: yellow;")
+        self.sonTarih.setStyleSheet("color: #1565C0; font-size:15px; font-weight: bold; font-style: italic;")
         self.tarihi_al()
         #tablo ilk doldurma
         self.tabloElemanlariEkle(True)
@@ -315,6 +356,10 @@ class DateTimePicker(QWidget):
         self.editModeBasildi()
 
         #self.tabloBoya()
+
+
+        #self.darkButton = QPushButton("Dark Mode Aç/Kapa",self)
+        #self.darkButton.clicked.connect(self.dark_light_button)
 
         #self.datetime_edit.dateTimeChanged.connect(self.onDateTimeChanged) # sinyale göre haraket belirler
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -366,8 +411,10 @@ class DateTimePicker(QWidget):
         layout.addWidget(self.uyari1, 10,4, 1, 3)
         layout.addWidget(self.sonTarih, 11,6)
 
+        #layout.addWidget(self.darkButton, 11,0)
+
         # Pencereyi ayarlama
-        self.setWindowTitle('Date Control')
+        self.setWindowTitle('Toyotetsu-Tarih Kontrol GUI')
         self.show()
         
     def butonBasildi(self):
@@ -683,12 +730,12 @@ class DateTimePicker(QWidget):
                     self.table.setItem(y_, 2, QTableWidgetItem(value["end"]))
 
                     #düzenle butonu
-                    but1 = QPushButton("Düzenle")
+                    but1 = QPushButton("Düzenle", self)
                     but1.clicked.connect(lambda _, r=3, c=y_: self.tabloButtonDuzenle(r,c))
                     self.table.setCellWidget(y_, 3, but1)
 
                     #silme butonu
-                    but2 = QPushButton("Sil")
+                    but2 = QPushButton("Sil", self)
                     but2.clicked.connect(lambda _, r=4, c=y_: self.tabloButtonSil(r,c))
                     self.table.setCellWidget(y_, 4, but2)
 
@@ -929,6 +976,7 @@ class DateTimePicker(QWidget):
             item = self.table.item(num,s)
             item.setBackground(QColor(255, 0, 51))
             item.setForeground(QColor(0,0,0))
+            #item.setStyleSheet("background-color: #FF0033")
 
     def tablo_yazdir(self):
         pass
@@ -949,11 +997,11 @@ class DateTimePicker(QWidget):
                 self.table.setItem(y_, 1, QTableWidgetItem(value["start"]))
                 self.table.setItem(y_, 2, QTableWidgetItem(value["end"]))
                 #düzenle
-                but1 = QPushButton("Düzenle")
+                but1 = QPushButton("Düzenle", self)
                 but1.clicked.connect(lambda _, r=3, c=y_: self.tabloButtonDuzenle(r,c))
                 self.table.setCellWidget(y_, 3, but1)
                 #sil butonu
-                but2 = QPushButton("Sil")
+                but2 = QPushButton("Sil", self)
                 but2.clicked.connect(lambda _, r=4, c=y_: self.tabloButtonSil(r,c))
                 self.table.setCellWidget(y_, 4, but2)
                 y_+=1
@@ -1318,7 +1366,16 @@ class DateTimePicker(QWidget):
         except Exception as e:
             self.hataLabel.setText("Hata: Veri Tabanı Hatası 7")
 
-
+    '''
+    def dark_light_button(self):
+        if not self.isDarkActive:
+            apply_stylesheet(app, theme='dark_blue.xml')
+            self.isDarkActive = True
+        else:
+            apply_stylesheet(app, theme='light_blue.xml')
+            self.isDarkActive = False
+    '''
+    
         
     
 if __name__ == '__main__':
