@@ -49,33 +49,35 @@ BİTTİ 14 GİBİ- EXCEL DOSYASI YÜKLE GETİRİLECEK
 
 BİTTİ 15 GİBİ - DB DOSYASI YÜKLE
 
---------------
+tablo uzunluk ayari ayarlandi
+
+27.08
+
+BİTTİ 16 - SİLME VE DÜZENLEME DURUMLARI İÇİN YEDEK DB ARADA ALİNABİLİR. -> butonlarla silme de eklendi
+
+TABLO HİZALAMA BİTTİ
+
+GİRİŞ İÇİN DB OLUŞTURULUYOR
+
+hata kontrolleri eklendi exception kontrolleri için try-catch kullanildi
 
 --------------
 
 ?tabloElemanlariEkle return değerleri kontrolleri lazim
 
-?HATA KISIMLARINA KONTROL LAZİM - ekstra hata kontrolleri ile sistem daha tutarlı hale getirilebilir
-
-?HATA OLMADIĞINDA HATA MESAJLARINI SIFIRLA - update gerekebilir
-
-?oldu mu?TABLO UZUNLUK OLAYINDA HALA HATA VAR !!!!!!
+??HATALABEL KONTROLLERİ LAZİM - yeni eklenenlere de mesaj sifirla eklenmeli
 --------------
-
-?TARİH FORMATLARINA KONTROL LAZİM  - 
-kontrol func.
-#kontroller olacak burada - sorun varsa false olsun
-
-SİLME VE DÜZENLEME DURUMLARI İÇİN YEDEK DB ARADA ALİNABİLİR. - gunlük tutulacak
 
 FİLTERDE SİLİNCE,düzenlenince FİLTEDEYKEN İŞLEM YAPILINCA TÜM ELEMANLARI GÖSTERİYOR 
 
 DÜZENLE YAPILINCA VERİ EN ALTA GİDİYOR BUTON AKTİFLİĞİNE GÖRE SIRALA DÜZENLEYİNCE SONA EKLEME
 
+!!!!tablo yazdir kimsi eklenecek
+
 '''
 
 '''
-EXE HALE GETİRME - EXE OLAYI BOZUK
+EXE HALE GETİRME 
 pip install pyinstaller
 pyinstaller --onefile --noconsole pythongui.py
 
@@ -86,7 +88,6 @@ pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui -
 
 pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui --hidden-import=PyQt6.QtWidgets --hidden-import=plyer.platforms.win.notification --hidden-import=plyer.platforms.macosx.notification --noconsole pythongui.py
 
-
 '''
 
 '''
@@ -95,10 +96,8 @@ Sorunlar/Sorular /Soylenecekler:
 SORUNLAR
 -excel ekleme nedenim tablonun güzel gözükmemeseydi. Uzun bir giriş olduğunda problem oluyor ve ayar yapamiyorum otomatik doldurma fonksiyonu nedenini anlamadığım şekilde düzgün çalışmıyor
 
-
 SORULAR
 -10 gün <= mi < mi?
-
 
 SOYLENECEKLER
 
@@ -132,32 +131,56 @@ class DateTimePicker(QWidget):
         if not os.path.exists(current_dir + excel_klasor):
             os.makedirs(current_dir + excel_klasor)
         
-
-
-        
-
-
-
         #database
-        con = sqlite3.connect('tablo_verileri.db')
-        c = con.cursor()
-        #table
-        #3 ' olacak
-        c.execute('''
+        try:
+            con = sqlite3.connect('tablo_verileri.db')
+            c = con.cursor()
+            #table
+            #3 ' olacak
+            c.execute('''
                   CREATE TABLE IF NOT EXISTS tablo_verileri (
                   isim TEXT,
                   start TEXT,
                   end TEXT
                   ) ''')
         
-        #tablo doldurma
-        c.execute('SELECT * FROM tablo_verileri')
-        veriler = c.fetchall()
+            #tablo doldurma
+            c.execute('SELECT * FROM tablo_verileri')
+            veriler = c.fetchall()
+            con.close()
+        except Exception as e:
+            #self.hataLabel.setText("Hata: Veri Tabanına Bağlanma Hatası"),
+            return
         # #self.dct[isim_str] = {'name': isim_str, 'start': start_date_str, 'end': ending_date_str}
         for veri in veriler:
             self.dct[veri[0]] = {'name': veri[0], 'start': str(veri[1]), 'end': str(veri[2]) }
 
-        #con.close()
+        
+        # giriş .db adında dosya oluşturma her girişte güncelleme
+        try:
+            con = sqlite3.connect('giris_tablo.db')
+            c = con.cursor()
+            c.execute('''
+                  CREATE TABLE IF NOT EXISTS tablo_verileri (
+                  isim TEXT,
+                  start TEXT,
+                  end TEXT
+                  ) ''')
+            c.execute("DELETE FROM tablo_verileri")
+            for key,value in self.dct.items():
+                c.execute('''
+                INSERT INTO tablo_verileri (isim, start, end)
+                VALUES (?,?,?)
+                ''',(key,value['start'], value['end']))
+            con.commit()
+            con.close()
+
+        except Exception as e:
+            #self.hataLabel.setText("Hata: Giriş Veri Tabanına Bağlanma Hatası")
+            return
+
+        #excel ve db dosyaları 1 ay geçmişse temizle
+
         #colNum = 5
         self.colNo = 5
         #rowNum = 34 # bu  sonra len olarak belirlenecek
@@ -175,7 +198,7 @@ class DateTimePicker(QWidget):
         #label2 yerini değiştirme
 
         self.uyari = QLabel("""*Database veya Excel Verisi Yüklediğinizde Eski Database "db_yedekleme" Klasöründe Yedeklenir""", self)
-        self.uyari.setStyleSheet("color: lightblue;")
+        self.uyari.setStyleSheet("color: red;")
 
         #isim giris
         self.isimTextbox = QLineEdit("")
@@ -209,7 +232,6 @@ class DateTimePicker(QWidget):
         self.listeDuzenle = QPushButton("Tabloyu Excel Olarak Çıktı Al")
         self.listeDuzenle.clicked.connect(self.excelTabloOutput)
 
-
         self.listeAll = QPushButton("Tüm Verileri Excel Olarak Çıktı Al")
         self.listeAll.clicked.connect(self.excelOutput)
 
@@ -224,13 +246,19 @@ class DateTimePicker(QWidget):
         self.table.setHorizontalHeaderLabels(['İsim', 'Başlangıç Tarihi', 'Bitiş Tarihi', 'Düzenle', 'Sil'])
 
         #header ayari
-        header = self.table.horizontalHeader()
-        header.setStretchLastSection(True)
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
-        for col in range(self.colNo):
-            header.setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
+        self.headerAyar()
         
         #self.button.clicked.connect(self.butonBasildi)
+        self.silLabel = QLabel("Dosyaları Temizleme",self)
+
+        self.yedeklemeDosyaSil = QPushButton(".db Dosyalarını Temizle")
+        self.yedeklemeDosyaSil.clicked.connect(self.yedeklemeDosyaSilFunc1)
+
+        self.yedeklemeDosyaSil2 = QPushButton(".xlsx Dosyalarını Temizle")
+        self.yedeklemeDosyaSil2.clicked.connect(self.yedeklemeDosyaSilFunc2)
+
+        self.yedeklemeDosyaSil3 = QPushButton("Tüm Dosyaları Temizle")
+        self.yedeklemeDosyaSil3.clicked.connect(self.yedeklemeDosyaSilFunc3)
         
         #Search elemenleri
         self.searchLabel = QLabel("İsim Ara", self)
@@ -267,18 +295,12 @@ class DateTimePicker(QWidget):
         #self.hataLabel.setText("Hata: Geçersiz giriş!")
 
         #düzenleme modu
-        self.editMode = QPushButton("Düzenleme Modunu Aç/Kapa")
+        self.editMode = QPushButton("Düzenleme/İnceleme Modunu Aç/Kapa")
         self.editMode.clicked.connect(self.editModeBasildi)
 
-        
-        # left  table align
-        # BU BELKİ KALDIRILABİLİR???
-        '''
-        ver_header = self.table.verticalHeader()
-        ver_header.setStretchLastSection(True)
-        for ver1 in range(self.rowNo):
-            ver_header.setSectionResizeMode(ver1, QHeaderView.ResizeMode.Stretch)  
-        '''
+        #uyari
+        self.uyari1 = QLabel("*Depolama problemi yaşamamanız için sıklıkla dosyaları temizlemeniz önerilir!", self)
+        self.uyari1.setStyleSheet("color: red;")
 
         #tablo ilk doldurma
         self.tabloElemanlariEkle(True)
@@ -286,12 +308,6 @@ class DateTimePicker(QWidget):
         self.editModeBasildi()
 
         #self.tabloBoya()
-
-        #alignment
-        #self.label2.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        #self.ending_date.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        
-        # Satır yüksekliğini otomatik ayarla
 
         #self.datetime_edit.dateTimeChanged.connect(self.onDateTimeChanged) # sinyale göre haraket belirler
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -335,21 +351,27 @@ class DateTimePicker(QWidget):
         # Ana pencereye layout'u ekleme
         self.setLayout(layout)
 
+        #Silme Layoutları
+        layout.addWidget(self.silLabel, 10,3)
+        layout.addWidget(self.yedeklemeDosyaSil, 11, 3)
+        layout.addWidget(self.yedeklemeDosyaSil2, 11, 4)
+        layout.addWidget(self.yedeklemeDosyaSil3, 11, 5)
+        layout.addWidget(self.uyari1, 10,4, 1, 3)
+
         # Pencereyi ayarlama
         self.setWindowTitle('Date Control')
         self.show()
         
-    '''
-    def onDateTimeChanged(self, datetime):
-        # Seçilen tarih ve saati QLabel'da gösterme
-        self.label.setText(f"Selected datetime: {datetime.toString()}")
-        '''
     def butonBasildi(self):
         noti = False
         temp_isDatePressed = self.isDatePressed
 
         #texti alma
-        isim_str = self.isimTextbox.text()
+        isim = self.isimTextbox
+        if not isim:
+            self.hataLabel.setText("Hata: İsime erişilemiyor.")
+            return
+        isim_str = isim.text()
         if isim_str == "":
             self.hataLabel.setText("Hata: İsim boş olamaz!")
             return
@@ -398,19 +420,23 @@ class DateTimePicker(QWidget):
         if not ret:
             self.hataLabel.setText("Hata: Lütfen verileri doğru formatta giriniz!")
             return 
-        
-        con = sqlite3.connect('tablo_verileri.db')
-        c = con.cursor()
-        c.execute('DELETE FROM tablo_verileri')
-        for key,value in self.dct.items():
-            #3 ' unutma
-            c.execute('''
-            INSERT INTO tablo_verileri (isim, start, end)
-            VALUES (?,?,?)
-            ''',(key,value['start'], value['end']))
-        con.commit()
-        con.close()
+        try:
+            con = sqlite3.connect('tablo_verileri.db')
+            c = con.cursor()
+            c.execute('DELETE FROM tablo_verileri')
+            for key,value in self.dct.items():
+                #3 ' unutma
+                c.execute('''
+                INSERT INTO tablo_verileri (isim, start, end)
+                VALUES (?,?,?)
+                ''',(key,value['start'], value['end']))
+            con.commit()
+            con.close()
+        except:
+            self.hataLabel.setText("Hata: Veri Tabanı Hatası!")
+            return
         self.duzenle_kapali()
+        self.headerAyar()
         self.hataLabel.setText("")
 
     def excelImport(self):
@@ -421,16 +447,26 @@ class DateTimePicker(QWidget):
         opt = QFileDialog.Option.ReadOnly
         file_path, _ = QFileDialog.getOpenFileName(self, "Excel Dosyasını Seç", "","Excel Files (*.xlsx);;All Files (*)", options=opt)
         if file_path:
-            df = pd.read_excel(file_path, engine="openpyxl")
+            try:
+                df = pd.read_excel(file_path, engine="openpyxl")
+            except:
+                self.hataLabel.setText("Hata: Excel Dosyasını Okurken Hata Oluştu.")
+                return
             #print(df, "*****!****")
             #self.tabloTemizleme()
             #print(df.columns)
+            if len(df.columns) != 3:
+                self.hataLabel.setText("Hata: Excel Tablo Formatı Yanlış") 
+                return
             df.columns = ['name', 'start', 'end']
             all_elem = df.to_dict('records')
             new_dct = {}
             for elem in all_elem: 
                 #print(elem, " O.o")
                 #print(elem['name'], elem["start"], elem["end"], sep="--")
+                if not self.isValidDate(elem['start']) or not self.isValidDate(elem['end']):
+                    self.hataLabel.setText("Hata: Excel Dosyasında Yanlış Tarih Formatı Bulundu.")
+                    return
                 new_dct[elem['name']] = {'name': elem['name'], 'start': elem['start'], 'end': elem['end']}
             #print("\n\n")
             #print(new_dct, " !!!!!!!")
@@ -444,34 +480,35 @@ class DateTimePicker(QWidget):
             self.tablo_guncelle(new_dct=self.dct, noti=True)
             
             #self.editModeBasildi()
-            
             now = datetime.now()
             date_time_str = now.strftime('%Y%m%d_%H%M%S')
             full_path = os.path.join(os.getcwd()+ f'/db_yedekleme/EXCEL_BACKUP_tablo_verileri_backup_{date_time_str}.db')
             shutil.copy('./tablo_verileri.db',full_path)
 
-            con = sqlite3.connect('tablo_verileri.db')
-            c = con.cursor()
-            #şimdiki tablo_verileri'ni sakla!!!!!
+            try:
+                con = sqlite3.connect('tablo_verileri.db')
+                c = con.cursor()
+                #şimdiki tablo_verileri'ni sakla!!!!!
            
-            #name = f'tablo_verileri_{date_time_str}'
-
-
-            c.execute('DELETE FROM tablo_verileri')
-            for key,value in self.dct.items():
+                #name = f'tablo_verileri_{date_time_str}'
+                c.execute('DELETE FROM tablo_verileri')
+                for key,value in self.dct.items():
                 #3 ' unutma
-                c.execute('''
-                INSERT INTO tablo_verileri (isim, start, end)
-                VALUES (?,?,?)
-                ''',(key,value['start'], value['end']))
-            con.commit()
-            con.close()
+                    c.execute('''
+                    INSERT INTO tablo_verileri (isim, start, end)
+                    VALUES (?,?,?)
+                    ''',(key,value['start'], value['end']))
+                con.commit()
+                con.close()
+            except:
+                self.hataLabel.setText("Hata: Veri Tabanı Hatası")
+                return
 
         self.duzenle_kapali()
+        self.headerAyar()
         self.hataLabel.setText("")
         self.dateSort.setStyleSheet("")
         self.nameSort.setStyleSheet("")
-
 
     def getTableLength(self):
         l = 0
@@ -491,7 +528,8 @@ class DateTimePicker(QWidget):
             end_date_item = self.table.item(row, 2)
             #print(name_item, start_date_item, end_date_item, "*")
             if name_item == None or start_date_item == None or end_date_item == None:
-                break
+                self.hataLabel.setText("Hata: Tablo elemanlarına erişilemiyor.")
+                return
             name = name_item.text()
             start_date = start_date_item.text()
             end_date = end_date_item.text()
@@ -514,40 +552,43 @@ class DateTimePicker(QWidget):
         df.fillna('', inplace=True)
         filename, _ = QFileDialog.getSaveFileName(self, "Excel dosyasını kaydet", "", "Excel Files (*.xlsx);;All Files (*)")
         if filename:
-            df.to_excel(filename, index=False)
-            workbook = load_workbook(filename)
-            sheet = workbook.active
-            keys = list(ret_dict.keys())
+            try:
+                df.to_excel(filename, index=False)
+                workbook = load_workbook(filename)
+                sheet = workbook.active
+                keys = list(ret_dict.keys())
 
-            for y in range(len(ret_dict)):
-                #item_text = self.table.item(y,2).text()
-                item_text = self.dct[keys[y]]['end']
-                #print(item_text, " boom!")
-                dif = self.calculateDif(item_text)
-                if dif.days <= 10:
+                for y in range(len(ret_dict)):
+                    #item_text = self.table.item(y,2).text()
+                    item_text = self.dct[keys[y]]['end']
+                    #print(item_text, " boom!")
+                    dif = self.calculateDif(item_text)
+                    if dif.days <= 10:
                     #print("red")
-                    red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
-                    for i in ['A', 'B', 'C']:
-                        #print(i + str(y), "boom")
-                        sheet[i + str(y+2)].fill = red_fill
-                elif dif.days < 30:
-                    #print("yellow")
-                    yellow_fill = PatternFill(start_color="FFFF33", end_color="FFFF33",fill_type="solid")
-                    for i in ['A', 'B', 'C']:
-                        sheet[i+str(y+2)].fill = yellow_fill
-            for col in sheet.columns:
-                max_length = 0
-                column = col[0].column_letter  # Kolon harfini al
-                for cell in col:
-                    try:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(cell.value)
-                    except:
-                        pass
-                adjusted_width = (max_length + 2)  # İhtiyaca göre genişliği ayarla
-                sheet.column_dimensions[column].width = adjusted_width
+                        red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+                        for i in ['A', 'B', 'C']:
+                            #print(i + str(y), "boom")
+                            sheet[i + str(y+2)].fill = red_fill
+                    elif dif.days < 30:
+                        #print("yellow")
+                        yellow_fill = PatternFill(start_color="FFFF33", end_color="FFFF33",fill_type="solid")
+                        for i in ['A', 'B', 'C']:
+                            sheet[i+str(y+2)].fill = yellow_fill
+                for col in sheet.columns:
+                    max_length = 0
+                    column = col[0].column_letter  # Kolon harfini al
+                    for cell in col:
+                        try:
+                            if len(str(cell.value)) > max_length:max_length = len(cell.value)
+                        except:
+                            pass
+                    adjusted_width = (max_length + 2)  # İhtiyaca göre genişliği ayarla
+                    sheet.column_dimensions[column].width = adjusted_width
                 
-            workbook.save(filename)
+                workbook.save(filename)
+            except Exception as ex:
+                self.hataLabel.setText("Hata: Excel Çıktı Alınırken Hata Oluştu")
+                return
         self.duzenle_kapali()
         self.hataLabel.setText("")
 
@@ -566,40 +607,44 @@ class DateTimePicker(QWidget):
         #options = QFileDialog.Options()
         filename, _ = QFileDialog.getSaveFileName(self, "Excel dosyasını kaydet", "", "Excel Files (*.xlsx);;All Files (*)")
         if filename:
-            df.to_excel(filename, index=False)
-            workbook = load_workbook(filename)
-            sheet = workbook.active
-            for y in range(len(tablo_dct)):
-                #def calculateDif(self, get_item_date):
-                item_text = self.table.item(y,2).text()
-                dif = self.calculateDif(item_text)
-                #print(dif,"yo")
+            try:
+                df.to_excel(filename, index=False)
+                workbook = load_workbook(filename)
+                sheet = workbook.active
+                for y in range(len(tablo_dct)):
+                    #def calculateDif(self, get_item_date):
+                    item_text = self.table.item(y,2).text()
+                    dif = self.calculateDif(item_text)
+                    #print(dif,"yo")
 
-                if dif.days <= 10:
-                    #print("red")
-                    red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
-                    for i in ['A', 'B', 'C']:
+                    if dif.days <= 10:
+                        #print("red")
+                        red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+                        for i in ['A', 'B', 'C']:
                             #print(i + str(y), "boom")
                             sheet[i + str(y+2)].fill = red_fill
-                elif dif.days < 30:
-                    #print("yellow")
-                    yellow_fill = PatternFill(start_color="FFFF33", end_color="FFFF33",fill_type="solid")
-                    for i in ['A', 'B', 'C']:
-                        sheet[i+str(y+2)].fill = yellow_fill
+                    elif dif.days < 30:
+                        #print("yellow")
+                        yellow_fill = PatternFill(start_color="FFFF33", end_color="FFFF33",fill_type="solid")
+                        for i in ['A', 'B', 'C']:
+                            sheet[i+str(y+2)].fill = yellow_fill
 
-            for col in sheet.columns:
-                max_length = 0
-                column = col[0].column_letter  # Kolon harfini al
-                for cell in col:
-                    try:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(cell.value)
-                    except:
-                        pass
-                adjusted_width = (max_length + 2)  # İhtiyaca göre genişliği ayarla
-                sheet.column_dimensions[column].width = adjusted_width
+                for col in sheet.columns:
+                    max_length = 0
+                    column = col[0].column_letter  # Kolon harfini al
+                    for cell in col:
+                        try:
+                            if len(str(cell.value)) > max_length:max_length = len(cell.value)
+                        except:
+                            pass
+                    adjusted_width = (max_length + 2)  # İhtiyaca göre genişliği ayarla
+                    sheet.column_dimensions[column].width = adjusted_width
                 
-            workbook.save(filename)
+                workbook.save(filename)
+            except Exception as ex:
+                self.hataLabel.setText("Hata: Excel Çıktı Alınırken Bir Hata Oluştu.")
+                return
+            
             #print("excel dosyası kaydedildi ve renklendirildi.")
         self.duzenle_kapali()
         self.hataLabel.setText("")
@@ -607,6 +652,9 @@ class DateTimePicker(QWidget):
     def kontrolluEkle(self, isim_str, start_date_str, ending_date_str, noti):
         ret = True
         #kontroller olacak burada - sorun varsa false olsun
+        if isim_str == "" or not self.isValidDate(start_date_str) or not self.isValidDate(ending_date_str):
+            self.hataLabel.setText("Hata: Lütfen Doğru Formatta Tekrar Deneyiniz.")
+            return
 
         self.dct[isim_str] = {'name': isim_str, 'start': start_date_str, 'end': ending_date_str}
         ret2 = self.tabloElemanlariEkle(noti)
@@ -616,43 +664,52 @@ class DateTimePicker(QWidget):
 
     def  tabloElemanlariEkle(self, noti):
         #print(self.dct, type(self.dct))
-        self.aramaTemizlemeBasildi()
-        if len(self.dct) != 0:
-            y_ = 0
-            self.NameSortFunc()
-            for key,value in self.dct.items():
-                self.table.setItem(y_, 0, QTableWidgetItem(key))
-                self.table.setItem(y_, 1, QTableWidgetItem(value["start"]))
-                self.table.setItem(y_, 2, QTableWidgetItem(value["end"]))
+        try:
+            self.aramaTemizlemeBasildi()
+            if len(self.dct) != 0:
+                y_ = 0
+                self.NameSortFunc()
+                for key,value in self.dct.items():
+                    self.table.setItem(y_, 0, QTableWidgetItem(key))
+                    self.table.setItem(y_, 1, QTableWidgetItem(value["start"]))
+                    self.table.setItem(y_, 2, QTableWidgetItem(value["end"]))
 
-                #düzenle butonu
-                but1 = QPushButton("Düzenle")
-                but1.clicked.connect(lambda _, r=3, c=y_: self.tabloButtonDuzenle(r,c))
-                self.table.setCellWidget(y_, 3, but1)
+                    #düzenle butonu
+                    but1 = QPushButton("Düzenle")
+                    but1.clicked.connect(lambda _, r=3, c=y_: self.tabloButtonDuzenle(r,c))
+                    self.table.setCellWidget(y_, 3, but1)
 
-                #silme butonu
-                but2 = QPushButton("Sil")
-                but2.clicked.connect(lambda _, r=4, c=y_: self.tabloButtonSil(r,c))
-                self.table.setCellWidget(y_, 4, but2)
+                    #silme butonu
+                    but2 = QPushButton("Sil")
+                    but2.clicked.connect(lambda _, r=4, c=y_: self.tabloButtonSil(r,c))
+                    self.table.setCellWidget(y_, 4, but2)
 
-                y_+=1
-                if (y_ > self.rowNo):
-                    self.rowNo = y_
-                    self.table.setColumnCount(self.rowNo)
+                    y_+=1
+                    if (y_ > self.rowNo):
+                        self.rowNo = y_
+                        self.table.setColumnCount(self.rowNo)
                     
-            
-            self.table.resizeColumnsToContents()
-            self.table.resizeRowsToContents()
-            ret = self.tabloGunKontrol(self.dct, noti)
-            if not ret :
-                return False
-            return True
+                self.table.resizeColumnsToContents()
+                self.table.resizeRowsToContents()
+                ret = self.tabloGunKontrol(self.dct, noti)
+                if not ret :
+                    return False
+                return True
+        except Exception as ex:
+            self.hataLabel.setText("Hata: Tabloya eleman eklenirken hata oluştu.")
 
     def toDate(str):
         return datetime.strptime(str, '%d.%m.%Y')
     
     def changeColorSort(self, isDate):
-        if isDate:
+        if not self.dateSort:
+            self.hataLabel.setText("Hata: Tarihe göre sıralama butonunda hata!")
+            return
+        if not self.nameSort:
+            self.hataLabel.setText("Hata: İsme göre sıralam butonunda hata.")
+            return
+        
+        if isDate:                
             self.dateSort.setStyleSheet("background-color: lightgreen; color:black; border-style: outset; border-width:2px; border-radius:5px; border-color: beige;")
             self.nameSort.setStyleSheet("")
             self.isDatePressed = True
@@ -660,9 +717,6 @@ class DateTimePicker(QWidget):
             self.dateSort.setStyleSheet("")
             self.nameSort.setStyleSheet("background-color: lightgreen; color:black; border-style: outset; border-width:2px; border-radius:5px; border-color: beige; ")
             self.isDatePressed = False
-
-
-
 
     def dateSortFunc(self):
         self.changeColorSort(True)
@@ -673,6 +727,7 @@ class DateTimePicker(QWidget):
         self.tabloTemizleme()
         self.tablo_guncelle(new_dct)
         self.duzenle_kapali()
+        self.headerAyar()
         self.hataLabel.setText("")
         #print("AAAAAAA")
     #self.toDate(item[2])
@@ -684,6 +739,7 @@ class DateTimePicker(QWidget):
        self.tabloTemizleme()
        self.tablo_guncelle(new_dct)
        self.duzenle_kapali()
+       self.headerAyar()
        self.hataLabel.setText("")
 
     def isValidDate(self, date):
@@ -694,24 +750,20 @@ class DateTimePicker(QWidget):
         except ValueError:
             return False
 
-
     def tabloButtonDuzenle(self, r, c): # c sütun no
         #temp_dict = self.tabloVerileriEldeEt()
         #keys_list = list(self.tabloVerileriEldeEt().keys())
         keys_list = list(self.editDict.keys())
-        print(keys_list, r , c)
+        #print(keys_list, r , c)
         old_key = keys_list[c]
-        print(old_key, "OOOO")
+        #print(old_key, "OOOO")
 
         name = self.table.item(c,0).text()
-        print("name:", name)
+        #print("name:", name)
         bas_tarih = self.table.item(c,1).text()
         son_tarih = self.table.item(c,2).text()
 
         if not (self.isValidDate(bas_tarih) and self.isValidDate(son_tarih) and len(name) != 0):
-            #print(self.isValidDate(bas_tarih), self.isValidDate(son_tarih),len(name), "**" )
-            #print("HATAAAAAAA")
-            #Bu kısma çözüm lazim - çözüm dediğim hatayı göstersin
             if len(name) == 0:
                 self.hataLabel.setText("Hata: İsim boş olamaz!")
             elif not self.isValidDate(bas_tarih):
@@ -721,9 +773,13 @@ class DateTimePicker(QWidget):
             return 
 
         new_key = self.table.item(c,0).text()
-        del self.dct[old_key]
+        try:
+            del self.dct[old_key]
+        except Exception as ex:
+            self.hataLabel.setText("Hata: Silme İşleminde Hata Oluştu!")
+            return
         #del temp_dict[old_key]
-        print("old key", old_key, "new_key", new_key, "****")
+        #print("old key", old_key, "new_key", new_key, "****")
         self.dct[new_key] = {'name': new_key, 
                              'start': bas_tarih,
                              'end': son_tarih
@@ -755,17 +811,19 @@ class DateTimePicker(QWidget):
         datetime_obj2 = QDateTime.fromString(son_tarih,"dd.MM.yyyy")
         self.ending_date.setDateTime(datetime_obj2)
 
-
-
         self.editDict = self.tabloVerileriEldeEt()
-        con = sqlite3.connect('tablo_verileri.db')
-        c = con.cursor()
-        c.execute('''UPDATE tablo_verileri
+        try:
+            con = sqlite3.connect('tablo_verileri.db')
+            c = con.cursor()
+            c.execute('''UPDATE tablo_verileri
                        SET isim = ?, start = ?, end = ?
                        WHERE isim = ?
-        ''',(new_key,bas_tarih,son_tarih,old_key ))
-        con.commit()
-        con.close()
+            ''',(new_key,bas_tarih,son_tarih,old_key ))
+            con.commit()
+            con.close()
+        except Exception as ex:
+            self.hataLabel.setText("Hata: Veri Tabanı Hatası!")
+            return
         self.duzenle_acik()
 
         #self.database_yazdir()
@@ -782,21 +840,30 @@ class DateTimePicker(QWidget):
         if not ret:
             self.hataLabel.setText("Hata: Tablo oluştururken hata meydana geldi!")
             return 
-        con = sqlite3.connect('tablo_verileri.db')
-        c = con.cursor()
-        c.execute(''' DELETE FROM tablo_verileri
-                      WHERE isim = ?
-                  ''',(name_,))
-        con.commit()
-        con.close()
+        try:
+            con = sqlite3.connect('tablo_verileri.db')
+            c = con.cursor()
+            c.execute(''' DELETE FROM tablo_verileri
+                        WHERE isim = ?
+                    ''',(name_,))
+            con.commit()
+            con.close()
+        except Exception as ex:
+            self.hataLabel.setText("Hata: Veri Tabanı Hatası!")
+            return
 
+        self.headerAyar()
+        self.duzenle_kapali()
         #self.rowNo-=1
         #self.table.setRowCount(self.rowNo)
-        print(self.rowNo, self.colNo, "AOAOAO")
+        #print(self.rowNo, self.colNo, "AOAOAO")
 
 
     def tabloTemizleme(self):
-        self.table.clearContents()
+        try:
+            self.table.clearContents()
+        except Exception as ex:
+            self.hataLabel.setText("Hata: Tablo Temizlenirken Hata Oluştu.")
 
     def calculateDif(self, get_item_date):
         date_format = "%d.%m.%Y"
@@ -807,33 +874,40 @@ class DateTimePicker(QWidget):
         return dif
 
     def tabloGunKontrol(self, dct, noti):
-        print(self.table.rowCount(), "rowww")
-        len_ =  len(dct)
-        print(len_, " lllllleeeeennn")
-        isNotificationRequired = False
-        for e in range(len_):
-            print(e)
-            get_item = self.table.item(e, 2)
-            get_item_date = get_item.text()
-            if not self.isValidDate(get_item_date):
-                return False
-            dif = self.calculateDif(get_item_date=get_item_date)
-            if dif.days <= 10:
-                # 10 günden az - hem boya hem uyarı olayını ayarla
-                isNotificationRequired = True
-                self.tabloKirmiziBoya(num=e)
-            elif dif.days < 30:
-                self.tabloSariBoya(num=e)
-        if isNotificationRequired and noti:
+        #print(self.table.rowCount(), "rowww")
+        try:
+            len_ =  len(dct)
+            #print(len_, " lllllleeeeennn")
+            isNotificationRequired = False
+            for e in range(len_):
+                #print(e)
+                get_item = self.table.item(e, 2)
+                get_item_date = get_item.text()
+                if not self.isValidDate(get_item_date):
+                    return False
+                dif = self.calculateDif(get_item_date=get_item_date)
+                if dif.days <= 10:
+                    # 10 günden az - hem boya hem uyarı olayını ayarla
+                    isNotificationRequired = True
+                    self.tabloKirmiziBoya(num=e)
+                elif dif.days < 30:
+                    self.tabloSariBoya(num=e)
+        except Exception as ex:
+            self.hataLabel.setText("Hata: Tablo Gün Kontrolünde Hata!")
+            return False
+        try:
+            if isNotificationRequired and noti:
             #print("noti!")
-            notification.notify(
+                notification.notify(
                 title = "Uyarı!",
                 message = "10 günden az bir tarih bulundu!",
                 app_name = "Tarih Kontrol Uygulaması",
                 timeout = 5
             )
+        except Exception as ex:
+            self.hataLabel.setText("Bildirim Gönderirken Hata Oluştu.")
+            return False
         return True
-
 
     def tabloSariBoya(self,num):
         for s in range(3):
@@ -842,69 +916,68 @@ class DateTimePicker(QWidget):
             item.setBackground(QColor(255, 255, 51))
             item.setForeground(QColor(0,0,0))
 
-        
     def tabloKirmiziBoya(self,num):
         for s in range(3):
             item = self.table.item(num,s)
             item.setBackground(QColor(255, 0, 51))
             item.setForeground(QColor(0,0,0))
 
-    
     def tablo_yazdir(self):
-        con = sqlite3.connect('tablo_verileri.db')
-        c = con.cursor()
-        c.execute('SELECT * FROM tablo_verileri')
-        rows = c.fetchall()
-        for row in rows:
-            print(row)
-        con.close()
+        pass
 
     def tablo_guncelle(self, new_dct,noti=False):
-        #if len(new_dct) == 0:
-        #    return
-        y_ = 0
+        try:
+            #if len(new_dct) == 0:
+            #    return
+            y_ = 0
         
-        self.tabloTemizleme()
-        self.rowNo = len(new_dct)
-        self.table.setRowCount(self.rowNo)
-        print("**********************************")
-        for key,value in new_dct.items():
-            print(key,value, "!!!!!!!!!!!")
-            self.table.setItem(y_, 0, QTableWidgetItem(key))
-            self.table.setItem(y_, 1, QTableWidgetItem(value["start"]))
-            self.table.setItem(y_, 2, QTableWidgetItem(value["end"]))
-            #düzenle
-            but1 = QPushButton("Düzenle")
-            but1.clicked.connect(lambda _, r=3, c=y_: self.tabloButtonDuzenle(r,c))
-            self.table.setCellWidget(y_, 3, but1)
-            #sil butonu
-            but2 = QPushButton("Sil")
-            but2.clicked.connect(lambda _, r=4, c=y_: self.tabloButtonSil(r,c))
-            self.table.setCellWidget(y_, 4, but2)
-            y_+=1
+            self.tabloTemizleme()
+            self.rowNo = len(new_dct)
+            self.table.setRowCount(self.rowNo)
+            #print("**********************************")
+            for key,value in new_dct.items():
+                #print(key,value, "!!!!!!!!!!!")
+                self.table.setItem(y_, 0, QTableWidgetItem(key))
+                self.table.setItem(y_, 1, QTableWidgetItem(value["start"]))
+                self.table.setItem(y_, 2, QTableWidgetItem(value["end"]))
+                #düzenle
+                but1 = QPushButton("Düzenle")
+                but1.clicked.connect(lambda _, r=3, c=y_: self.tabloButtonDuzenle(r,c))
+                self.table.setCellWidget(y_, 3, but1)
+                #sil butonu
+                but2 = QPushButton("Sil")
+                but2.clicked.connect(lambda _, r=4, c=y_: self.tabloButtonSil(r,c))
+                self.table.setCellWidget(y_, 4, but2)
+                y_+=1
 
-                
-            
-        self.table.resizeColumnsToContents()
-        self.table.resizeRowsToContents()
-        ret = self.tabloGunKontrol(new_dct, noti)
-        return ret
+            self.table.resizeColumnsToContents()
+            self.table.resizeRowsToContents()
+            ret = self.tabloGunKontrol(new_dct, noti)
+            self.headerAyar()
+            return ret
+        except Exception as ex:
+            self.hataLabel.setText("Hata: Tablo Güncellenirken Hata Oluştu!")
+            return
         
         
     def database_yazdir(self):
-        con = sqlite3.connect('tablo_verileri.db')
-        c = con.cursor()
-
-        c.execute("SELECT * FROM tablo_verileri")
-        rows= c.fetchall()
-        print("****")
-        for row in rows:
-            print(row)
-        print("****")
-        con.close()
+        try:
+            con = sqlite3.connect('tablo_verileri.db')
+            c = con.cursor()
+            c.execute('SELECT * FROM tablo_verileri')
+            rows = c.fetchall()
+            for row in rows:
+                print(row)
+            con.close()
+        except Exception as ex:
+            self.hataLabel.setText("Hata: Tablo Yazdırılıken Hata Oluştu.")
+            return
 
     def aramaBasildi(self):
-        arama_text = self.searchTextbox.text()
+        arama = self.searchTextbox
+        if not arama:
+            self.hataLabel.setText("Hata: Arama Kutusuna Erişilemiyor.")
+        arama_text = arama.text()
         #print(arama_text, "hmhmhm")
         if arama_text == "":
             self.hataLabel.setText("Hata: Arama boş olamaz!")
@@ -927,6 +1000,7 @@ class DateTimePicker(QWidget):
             self.NameSortFunc()
         #self.tabloBoyutGuncelle()
         self.duzenle_kapali()
+        self.headerAyar()
         self.hataLabel.setText("")
 
     def aramaBasildi2(self):
@@ -952,6 +1026,7 @@ class DateTimePicker(QWidget):
         else:
             self.NameSortFunc()
         self.duzenle_kapali()
+        self.headerAyar()
         self.hataLabel.setText("")
 
 
@@ -964,6 +1039,7 @@ class DateTimePicker(QWidget):
         else:
             self.NameSortFunc()
         self.duzenle_kapali()
+        self.headerAyar()
         self.hataLabel.setText("")
 
 
@@ -984,6 +1060,7 @@ class DateTimePicker(QWidget):
         else:
             self.NameSortFunc()
         self.duzenle_kapali()
+        self.headerAyar()
         self.hataLabel.setText("")
         
     
@@ -1004,6 +1081,7 @@ class DateTimePicker(QWidget):
         else:
             self.NameSortFunc()
         self.duzenle_kapali()
+        self.headerAyar()
         self.hataLabel.setText("")
 
     def normalBasildi(self):
@@ -1022,56 +1100,65 @@ class DateTimePicker(QWidget):
         else:
             self.NameSortFunc()
         self.duzenle_kapali()
+        self.headerAyar()
         self.hataLabel.setText("")
 
     def newDatabase(self):
         #BURAYA KONTROL GEREKECEK
-        opt = QFileDialog.Option.ReadOnly
-        file_path, _ = QFileDialog.getOpenFileName(self, "Veritabanı dosyasını seç", "", "Database Files (*.db);;All Files (*)", options=opt)
-        if file_path:
-
-            con = sqlite3.connect(file_path)
-            df = pd.read_sql_query("SELECT * FROM tablo_verileri", con)
-            con.close()
-            self.tabloTemizleme()
-            df.columns = ['name', 'start', 'end']
-            all_elem = df.to_dict('records')
-            new_dct = {}
-            for elem in all_elem:
-                new_dct[elem['name']] = {'name': elem['name'], 'start': elem['start'], 'end': elem['end']}
-            self.dct = new_dct
-            self.tabloBoyutInput(len(self.dct))
+        try:
+            opt = QFileDialog.Option.ReadOnly
+            file_path, _ = QFileDialog.getOpenFileName(self, "Veritabanı dosyasını seç", "", "Database Files (*.db);;All Files (*)", options=opt)
+            if file_path:
+                con = sqlite3.connect(file_path)
+                df = pd.read_sql_query("SELECT * FROM tablo_verileri", con)
+                con.close()
+                self.tabloTemizleme()
+                df.columns = ['name', 'start', 'end']
+                all_elem = df.to_dict('records')
+                new_dct = {}
+                for elem in all_elem:
+                    if not self.isValidDate(elem['start']) or not self.isValidDate(elem['end']):
+                        self.hataLabel.setText("Hata: Excel Dosyasında Yanlış Tarih Formatı Bulundu.")
+                        return
+                    new_dct[elem['name']] = {'name': elem['name'], 'start': elem['start'], 'end': elem['end']}
+                self.dct = new_dct
+                self.tabloBoyutInput(len(self.dct))
             
-            self.tablo_guncelle(new_dct=self.dct, noti=True)
+                self.tablo_guncelle(new_dct=self.dct, noti=True)
 
-            now = datetime.now()
-            date_time_str = now.strftime('%Y%m%d_%H%M%S')
-            full_path = os.path.join(os.getcwd()+ f'/db_yedekleme/DB_BACKUP_tablo_verileri_backup_{date_time_str}.db')
-            shutil.copy('./tablo_verileri.db',full_path)
+                now = datetime.now()
+                date_time_str = now.strftime('%Y%m%d_%H%M%S')
+                full_path = os.path.join(os.getcwd()+ f'/db_yedekleme/DB_BACKUP_tablo_verileri_backup_{date_time_str}.db')
+                shutil.copy('./tablo_verileri.db',full_path)
 
-            con = sqlite3.connect("tablo_verileri.db")
-            c = con.cursor()
+                try:
+                    con = sqlite3.connect("tablo_verileri.db")
+                    c = con.cursor()
 
-            c.execute('DELETE FROM tablo_verileri')
-            for key,value in self.dct.items():
-                c.execute('''
-                INSERT INTO tablo_verileri (isim, start, end)
-                VALUES (?,?,?)
-                ''',(key,value['start'], value['end']))
-            con.commit()
-            con.close()
-    
+                    c.execute('DELETE FROM tablo_verileri')
+                    for key,value in self.dct.items():
+                        c.execute('''
+                        INSERT INTO tablo_verileri (isim, start, end)
+                        VALUES (?,?,?)
+                        ''',(key,value['start'], value['end']))
+                    con.commit()
+                    con.close()
+                except Exception as ex:
+                    self.hataLabel.setText("Hata: Veri Tabanı Hatası")
+                    return       
+        except:
+            self.hataLabel.setText("Hata: Yeni Database Oluşturulurken Hata Oluştu!")
+            return
         self.duzenle_kapali()
+        self.headerAyar()
         self.hataLabel.setText("")
         self.dateSort.setStyleSheet("")
         self.nameSort.setStyleSheet("")
-
 
     def tabloBoyutGuncelle(self):
         boyut = self.getTableLength()
         self.table.setRowCount(boyut)
         #self.table.setColumnCount(self.rowNo)
-
 
     def tabloBoyutReset(self):
         boyut = len(self.dct)
@@ -1081,7 +1168,7 @@ class DateTimePicker(QWidget):
         self.table.setRowCount(boyut)
         for row in range(boyut):
             for col in range(self.table.columnCount()):
-                print(row, col)
+                #print(row, col)
                 if not self.table.item(row,col):
                     self.table.setItem(row,col,QTableWidgetItem(""))
 
@@ -1090,14 +1177,23 @@ class DateTimePicker(QWidget):
             but = self.table.cellWidget(row,3)
             if but:
                 but.setEnabled(True)
+            else:
+                self.hataLabel.setText("Hata: Tablo Buton Erişim Hatası")
+                return
 
     def duzenle_kapali(self):
         for row in range(self.table.rowCount()):
             but = self.table.cellWidget(row,3)
             if but:
                 but.setEnabled(False)
+            else:
+                self.hataLabel.setText("Hata: Tablo Buton Erişim Hatası")
+                return
 
     def button_mode(self, bool):
+        if not self.button or not self.searchButton or not self.searchButton2 or not self.resetButton1 or not self.dbEkle or not self.listeGoster or not self.listeGoster or not self.listeDuzenle or not self.listeAll or not self.dateSort or not self.nameSort or not self.onlylast10 or not self.between1030Basildi or not self.normal or not self.all:
+            self.hataLabel.setText("Hata: Buton Modu Değiştirilirken Hata")
+            return
         self.button.setEnabled(bool)
         self.searchButton.setEnabled(bool)
         self.searchButton2.setEnabled(bool)
@@ -1112,30 +1208,70 @@ class DateTimePicker(QWidget):
         self.between10to30.setEnabled(bool)
         self.normal.setEnabled(bool)
         self.all.setEnabled(bool)
+        self.yedeklemeDosyaSil.setEnabled(bool)
+        self.yedeklemeDosyaSil2.setEnabled(bool)
+        self.yedeklemeDosyaSil3.setEnabled(bool)
         for row in range(self.table.rowCount()):
             but = self.table.cellWidget(row,3)
             if but:
                 but.setEnabled(not bool)
+            else:
+                self.hataLabel.setText("Hata: Tablo Buton Erişim Hatası")
+                return
 
     def editModeBasildi(self):
         if self.isEditModeOn:
             self.isEditModeOn = False
             self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
             self.button_mode(True)
+            self.headerAyar()
             self.editMode.setStyleSheet("")
-
-            
         else:
             self.isEditModeOn = True
             self.editMode.setStyleSheet("background-color: lightgreen; color:black; border-style: outset; border-width:2px; border-radius:5px; border-color: beige;")
             self.table.setEditTriggers(QTableWidget.EditTrigger.AllEditTriggers)
             self.button_mode(False)
             self.editDict = self.tabloVerileriEldeEt()
-            
 
+    def yedeklemeDosyaSilFunc1(self):
+        self.pathTemizleme("./db_yedekleme")
+        self.hataLabel.setText("")
 
+    def yedeklemeDosyaSilFunc2(self):
+        self.pathTemizleme("./excel_dosyalari")
+        self.hataLabel.setText("")
+
+    def yedeklemeDosyaSilFunc3(self):
+        self.yedeklemeDosyaSilFunc1()
+        self.yedeklemeDosyaSilFunc2()
+        self.hataLabel.setText("")
+
+    def pathTemizleme(self, path):
+        fn = ""
+        if path == "./db_yedekleme":
+            fn = ".db"
+        else:
+            fn = ".xlsx"
+
+        #path1 = "./db_yedekleme"
+        if os.path.exists(path):
+            for filename in os.listdir(path):
+                file_path = os.path.join(path,filename)
+                try:
+                    if (os.path.isfile(file_path) or os.path.islink(file_path)) and filename.endswith(fn):
+                        os.unlink(file_path)
+                except Exception as e:
+                    #print("Hata")
+                    self.hataLabel.setText(f"{fn} dosyaları silinirken bir hata meydana geldi")
+                    return
+
+    def headerAyar(self):
+        self.header = self.table.horizontalHeader()
+        self.header.setStretchLastSection(True)
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+        for col in range(self.colNo):
+            self.header.setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
     
-
 if __name__ == '__main__':
     try:
         app = QApplication(sys.argv)

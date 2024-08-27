@@ -3,3 +3,5 @@ build
 dist
 excel_output/*
 db_yedekleme/*
+excel_dosyalari/*
+*.csv
