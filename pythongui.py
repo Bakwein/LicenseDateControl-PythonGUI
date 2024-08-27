@@ -110,7 +110,7 @@ SOYLENECEKLER
 class DateTimePicker(QWidget):
     def __init__(self):
         super().__init__()
-        self.resize(900, 400) #boyut
+        self.resize(900, 500) #boyut
         self.dct = dict()
         self.colNo = 0
         self.rowNo = 0
@@ -143,6 +143,9 @@ class DateTimePicker(QWidget):
                   start TEXT,
                   end TEXT
                   ) ''')
+            c.execute('''
+                    CREATE TABLE IF NOT EXISTS date_table (tarih TEXT)
+            ''')
         
             #tablo doldurma
             c.execute('SELECT * FROM tablo_verileri')
@@ -299,9 +302,13 @@ class DateTimePicker(QWidget):
         self.editMode.clicked.connect(self.editModeBasildi)
 
         #uyari
-        self.uyari1 = QLabel("*Depolama problemi yaşamamanız için sıklıkla dosyaları temizlemeniz önerilir!", self)
+        self.uyari1 = QLabel("Dosya fazlalığı problemi yaşamamanız için sıklıkla dosyaları temizlemeniz önerilir!", self)
         self.uyari1.setStyleSheet("color: red;")
 
+        #son_tarih
+        self.sonTarih = QLabel("Son Silinme Tarihi: Daha Önce Silinmemiş!", self)
+        self.sonTarih.setStyleSheet("color: yellow;")
+        self.tarihi_al()
         #tablo ilk doldurma
         self.tabloElemanlariEkle(True)
         self.dateSortFunc()
@@ -357,6 +364,7 @@ class DateTimePicker(QWidget):
         layout.addWidget(self.yedeklemeDosyaSil2, 11, 4)
         layout.addWidget(self.yedeklemeDosyaSil3, 11, 5)
         layout.addWidget(self.uyari1, 10,4, 1, 3)
+        layout.addWidget(self.sonTarih, 11,6)
 
         # Pencereyi ayarlama
         self.setWindowTitle('Date Control')
@@ -433,7 +441,7 @@ class DateTimePicker(QWidget):
             con.commit()
             con.close()
         except:
-            self.hataLabel.setText("Hata: Veri Tabanı Hatası!")
+            self.hataLabel.setText("Hata: Veri Tabanı Hatası 1!")
             return
         self.duzenle_kapali()
         self.headerAyar()
@@ -501,7 +509,7 @@ class DateTimePicker(QWidget):
                 con.commit()
                 con.close()
             except:
-                self.hataLabel.setText("Hata: Veri Tabanı Hatası")
+                self.hataLabel.setText("Hata: Veri Tabanı Hatası 2")
                 return
 
         self.duzenle_kapali()
@@ -822,7 +830,7 @@ class DateTimePicker(QWidget):
             con.commit()
             con.close()
         except Exception as ex:
-            self.hataLabel.setText("Hata: Veri Tabanı Hatası!")
+            self.hataLabel.setText("Hata: Veri Tabanı Hatası 3!")
             return
         self.duzenle_acik()
 
@@ -849,7 +857,7 @@ class DateTimePicker(QWidget):
             con.commit()
             con.close()
         except Exception as ex:
-            self.hataLabel.setText("Hata: Veri Tabanı Hatası!")
+            self.hataLabel.setText("Hata: Veri Tabanı Hatası 4!")
             return
 
         self.headerAyar()
@@ -1144,7 +1152,7 @@ class DateTimePicker(QWidget):
                     con.commit()
                     con.close()
                 except Exception as ex:
-                    self.hataLabel.setText("Hata: Veri Tabanı Hatası")
+                    self.hataLabel.setText("Hata: Veri Tabanı Hatası 5")
                     return       
         except:
             self.hataLabel.setText("Hata: Yeni Database Oluşturulurken Hata Oluştu!")
@@ -1236,10 +1244,14 @@ class DateTimePicker(QWidget):
     def yedeklemeDosyaSilFunc1(self):
         self.pathTemizleme("./db_yedekleme")
         self.hataLabel.setText("")
+        self.tarih_guncelle()
+        self.tarihi_al()
 
     def yedeklemeDosyaSilFunc2(self):
         self.pathTemizleme("./excel_dosyalari")
         self.hataLabel.setText("")
+        self.tarih_guncelle()
+        self.tarihi_al()
 
     def yedeklemeDosyaSilFunc3(self):
         self.yedeklemeDosyaSilFunc1()
@@ -1271,6 +1283,43 @@ class DateTimePicker(QWidget):
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
         for col in range(self.colNo):
             self.header.setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
+
+    def tarih_guncelle(self):
+        try:
+            con = sqlite3.connect('tablo_verileri.db')
+            c = con.cursor()
+            c.execute('''
+                DELETE FROM date_table
+                ''')
+            now = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
+            #print(now, "!*!*!*!")
+            c.execute('INSERT INTO date_table (tarih) VALUES (?)', (now,))
+            con.commit()
+            con.close()
+        except Exception as e:
+            self.hataLabel.setText("Hata: Veri Tabanı Hatası 6" + " " + str(e))
+            
+
+    def tarihi_al(self):
+        try:
+            con = sqlite3.connect('tablo_verileri.db')
+            c = con.cursor()
+            c.execute("SELECT tarih FROM date_table")
+            veriler = c.fetchall()
+            #print(len(veriler))
+            #print("*****")
+            #print(veriler)
+            if len(veriler) > 1:
+                self.hataLabel.setText("Hata: Tarih Veri Tabanı Tablosunda 1'den Fazla Değer Olamaz.")
+                return
+            elif len(veriler) == 1:
+                self.sonTarih.setText("Son Silinme Tarihi: " + str(veriler[0][0]))            
+
+        except Exception as e:
+            self.hataLabel.setText("Hata: Veri Tabanı Hatası 7")
+
+
+        
     
 if __name__ == '__main__':
     try:
