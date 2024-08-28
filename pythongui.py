@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QDateTimeEdit, Q
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from PyQt6.QtCore import QDateTime, Qt, QDate, QFile, QTextStream
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QIcon
 import sqlite3
 from datetime import datetime
 import pandas as pd
@@ -88,7 +88,7 @@ pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui -
 
 pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui --hidden-import=PyQt6.QtWidgets --hidden-import plyer.platforms.win.notification  --noconsole pythongui.py
 
-pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui --hidden-import=PyQt6.QtWidgets --hidden-import=plyer.platforms.win.notification --hidden-import=plyer.platforms.macosx.notification --noconsole pythongui.py
+pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui --hidden-import=PyQt6.QtWidgets --hidden-import=plyer.platforms.win.notification --hidden-import=plyer.platforms.macosx.notification --noconsole --icon=okak-cat-ok.ico pythongui.py
 
 '''
 '''
@@ -105,6 +105,8 @@ Oluşturduğunuz kısayola sağ tıklayın ve "Özellikler" seçeneğini seçin.
 Açılan pencerede "Kısayol" sekmesine gidin.
 "Çalıştır" seçeneğinin yanında bulunan açılır menüden "Simge Durumuna Küçültülmüş" seçeneğini seçin.
 "Uygula" ve ardından "Tamam" butonlarına tıklayarak değişiklikleri kaydedin.
+
+https://www.tenforums.com/tutorials/57690-create-elevated-shortcut-without-uac-prompt-windows-10-a.html !!!!!!
 
 3.resim eklemeyi yap!!!
 
@@ -124,6 +126,7 @@ class DateTimePicker(QWidget):
     def __init__(self):
         super().__init__()
         self.resize(900, 500) #boyut
+        self.showMinimized()
         self.dct = dict()
         self.colNo = 0
         self.rowNo = 0
@@ -403,6 +406,7 @@ class DateTimePicker(QWidget):
 
         # Pencereyi ayarlama
         self.setWindowTitle('Toyotetsu-Tarih Kontrol GUI')
+        self.setWindowIcon(QIcon('okak-cat-ok.ico'))
         self.show()
         
     def butonBasildi(self):
