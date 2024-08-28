@@ -906,7 +906,7 @@ class DateTimePicker(QWidget):
         try:
             if isNotificationRequired and noti:
                 notification.notify(
-                title = "Uyarı!",
+                title = "Azalmış Gün Uyarısı!",
                 message = "10 günden az bir tarih bulundu!",
                 app_name = "Tarih Kontrol Uygulaması",
                 timeout = 5
