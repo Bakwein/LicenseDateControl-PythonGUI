@@ -1,10 +1,10 @@
 import sys
 import random
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QDateTimeEdit, QLabel, QPushButton, QLineEdit, QGridLayout, QListWidget, QTableWidget, QHeaderView, QTableWidgetItem, QFileDialog, QDateTimeEdit, QMessageBox
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QDateTimeEdit, QLabel, QPushButton, QLineEdit, QGridLayout, QListWidget, QTableWidget, QHeaderView, QTableWidgetItem, QFileDialog, QDateTimeEdit, QMessageBox, QSystemTrayIcon, QMenu
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from PyQt6.QtCore import QDateTime, Qt, QDate, QFile, QTextStream
-from PyQt6.QtGui import QColor, QIcon
+from PyQt6.QtGui import QColor, QIcon, QAction
 import sqlite3
 from datetime import datetime
 import pandas as pd
@@ -88,7 +88,7 @@ pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui -
 
 pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui --hidden-import=PyQt6.QtWidgets --hidden-import plyer.platforms.win.notification  --noconsole pythongui.py
 
-pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui --hidden-import=PyQt6.QtWidgets --hidden-import=plyer.platforms.win.notification --hidden-import=plyer.platforms.macosx.notification --noconsole --icon=okak-cat-ok.ico pythongui.py
+pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui --hidden-import=PyQt6.QtWidgets --hidden-import=plyer.platforms.win.notification --hidden-import=plyer.platforms.macosx.notification --noconsole --icon=ico.ico pythongui.py
 
 '''
 '''
@@ -113,6 +113,43 @@ https://www.tenforums.com/tutorials/57690-create-elevated-shortcut-without-uac-p
 '''
 
 '''
+import pypyodbc as odbc #pip install pypyodbc
+
+con = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};' #
+                         'SERVER=server_adı;'
+                         'DATABASE=veritabanı_adı;'
+                         'UID=kullanıcı_adı;'
+                         'PWD=parola')
+
+#DRIVER={ODBC Driver 17 for SQL Server}; =>  Bu kısım, SQL Server veritabanına bağlanmak için kullanılacak ODBC (Open Database Connectivity) sürücüsünü belirtir.  SQL Server 2008 ve üstü sürümleri destekler.         
+
+#SERVER=server_adı;
+
+Açıklama: Bu kısım, SQL Server'ın bulunduğu sunucunun adını veya IP adresini belirtir.Eğer SQL Server yerel (localhost) olarak çalışıyorsa, buraya localhost veya . (nokta) yazabilirsiniz. Eğer SQL Server uzak bir sunucuda çalışıyorsa, buraya o sunucunun adı veya IP adresi yazılmalıdır. Örneğin, 192.168.1.100 gibi.
+
+#DATABASE=veritabanı_adı; 
+bağlanmak istediğiniz SQL Server veritabanının adını belirtir.
+veritabanı_adı: Bağlanmak istediğiniz veritabanının adını buraya yazmalısınız. Örneğin, DATABASE=myDatabase; şeklinde.
+
+con = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
+                     'SERVER=localhost;'
+                     'DATABASE=MyDatabase;'
+                     'UID=myUsername;'
+                     'PWD=myPassword')
+
+!DATABASE=MyDatabase; kısmı, SQL Server'da oluşturduğunuz veritabanının adını temsil eder. SQL Server'da veritabanları dosya bazlı değil, sunucu üzerinde tanımlanmış isimlerle yönetilir. Yani, MyDatabase SQL Server üzerinde oluşturduğunuz bir veritabanının adıdır, ve bu veritabanı birden fazla tabloyu barındırabilir. Oluşturmak için  SQL Server Management Studio (SSMS) gibi bir araç kullanarak yapabilirsiniz.
+
+1.SQL Server'a Bağlanın
+SQL Server Management Studio'yu (SSMS) başlatın.
+
+2. Yeni Bir Veritabanı Oluşturun
+SSMS'de "Object Explorer" penceresinde sunucuya sağ tıklayın ve "New Database" seçeneğini seçin.
+Açılan pencerede veritabanınıza bir ad verin. Örneğin, tablo_verileri.
+
+'''
+
+
+'''
 Sorunlar/Sorular /Soylenecekler:
 
 SORUNLAR
@@ -133,6 +170,35 @@ class DateTimePicker(QWidget):
         self.isDatePressed = True
         self.isEditModeOn = True
         self.editDict = {}
+
+        '''
+        self.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        '''
+        
+
+        self.tray_icon = QSystemTrayIcon(self)
+        self.tray_icon.setIcon(QIcon("ico.ico"))
+
+        tray_menu = QMenu()
+
+        #çıkış
+        exit_action = QAction("Çıkış", self)
+        exit_action.triggered.connect(self.close)
+        tray_menu.addAction(exit_action)
+
+        #menü sistem tepkisine ataniyor
+        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.show()
+
+        #baslangic
+        self.hide()
+
+        #cift tik
+        self.tray_icon.activated.connect(self.show_window)
+
+
+
         self.initUI()
         
     def initUI(self):
@@ -406,7 +472,7 @@ class DateTimePicker(QWidget):
 
         # Pencereyi ayarlama
         self.setWindowTitle('Toyotetsu-Tarih Kontrol GUI')
-        self.setWindowIcon(QIcon('okak-cat-ok.ico'))
+        self.setWindowIcon(QIcon('ico.ico'))
         self.show()
         
     def butonBasildi(self):
@@ -772,10 +838,10 @@ class DateTimePicker(QWidget):
 
     def tabloButtonDuzenle(self, r, c):
         keys_list = list(self.editDict.keys())
-        old_key = keys_list[c]
-        name = self.table.item(c,0).text()
-        bas_tarih = self.table.item(c,1).text()
-        son_tarih = self.table.item(c,2).text()
+        old_key = keys_list[r]
+        name = self.table.item(r,0).text()
+        bas_tarih = self.table.item(r,1).text()
+        son_tarih = self.table.item(r,2).text()
 
         if not (self.isValidDate(bas_tarih) and self.isValidDate(son_tarih) and len(name) != 0):
             if len(name) == 0:
@@ -785,7 +851,7 @@ class DateTimePicker(QWidget):
             else:
                 self.hataLabel.setText("Hata: Bitiş Tarihi Formatı Yanlış!")
             return 
-        new_key = self.table.item(c,0).text()
+        new_key = self.table.item(r,0).text()
         try:
             del self.getAnaDict()[old_key]
         except Exception as ex:
@@ -801,8 +867,8 @@ class DateTimePicker(QWidget):
                              'end': son_tarih
                              }
             '''
-        r = self.tabloAyniGuncelle()
-        self.tablo_guncelle(new_dct=r)
+        r_ = self.tabloAyniGuncelle()
+        self.tablo_guncelle(new_dct=r_)
         
         #Ara kısmını güncelle
         self.isimTextbox.setText(new_key)
@@ -813,7 +879,7 @@ class DateTimePicker(QWidget):
         datetime_obj2 = QDateTime.fromString(son_tarih,"dd.MM.yyyy")
         self.ending_date.setDateTime(datetime_obj2)
 
-        self.editDict = self.tabloVerileriEldeEt()
+        self.editDict = r_
         try:
             con = sqlite3.connect('tablo_verileri.db')
             c = con.cursor()
@@ -827,13 +893,14 @@ class DateTimePicker(QWidget):
             self.hataLabel.setText("Hata: Veri Tabanı Hatası 3!")
             return
         self.duzenle_acik()
-        self.headerAyar()        
+        self.headerAyar()
+        self.table.setCurrentCell(-1, -1)
        
     def tabloButtonSil(self, r, c):
         #dialog
         dlg = QMessageBox(self)
         dlg.setWindowTitle("Uyarı!")
-        dlg.setText(f"Tablodaki {c+1}. eleman silinecek. Emin misiniz?")
+        dlg.setText(f"Tablodaki {r+1}. eleman silinecek. Emin misiniz?")
         dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         dlg.setIcon(QMessageBox.Icon.Question)
         button = dlg.exec()
@@ -841,7 +908,7 @@ class DateTimePicker(QWidget):
             return
     
         get_table = self.tabloVerileriEldeEt()
-        name_ = self.table.item(c,0).text()
+        name_ = self.table.item(r,0).text()
         try: 
             del self.getAnaDict()[name_]
             del get_table[name_]
@@ -868,10 +935,17 @@ class DateTimePicker(QWidget):
             return
         self.headerAyar()
         self.duzenle_kapali()
+        self.table.setCurrentCell(-1, -1)
 
     def tabloTemizleme(self):
         try:
+            # Aktif düzenleyiciyi kapat
+            self.table.setCurrentCell(-1, -1)
+            if self.table.isActiveWindow():
+                self.table.closePersistentEditor(self.table.currentItem())
             self.table.clearContents()
+            #self.table.clearContents()
+            self.table.setCurrentCell(-1, -1)
         except Exception as ex:
             self.hataLabel.setText("Hata: Tablo Temizlenirken Hata Oluştu.")
 
@@ -935,11 +1009,14 @@ class DateTimePicker(QWidget):
 
     def tablo_guncelle(self, new_dct,noti=False):
         try:
+            # Aktif düzenleyiciyi kapat
+            self.table.setCurrentCell(-1, -1)
+            self.table.closePersistentEditor(self.table.currentItem())
             #if len(new_dct) == 0:
             #    return
             y_ = 0
         
-            self.tabloTemizleme()
+            #self.tabloTemizleme()
             self.rowNo = len(new_dct)
             self.table.setRowCount(self.rowNo)
             for key,value in new_dct.items():
@@ -948,11 +1025,11 @@ class DateTimePicker(QWidget):
                 self.table.setItem(y_, 2, QTableWidgetItem(value["end"]))
                 #düzenle
                 but1 = QPushButton("Düzenle", self)
-                but1.clicked.connect(lambda _, r=3, c=y_: self.tabloButtonDuzenle(r,c))
+                but1.clicked.connect(lambda _, r=y_, c=3: self.tabloButtonDuzenle(r,c))
                 self.table.setCellWidget(y_, 3, but1)
                 #sil butonu
                 but2 = QPushButton("Sil", self)
-                but2.clicked.connect(lambda _, r=4, c=y_: self.tabloButtonSil(r,c))
+                but2.clicked.connect(lambda _, r=y_, c=4: self.tabloButtonSil(r,c))
                 self.table.setCellWidget(y_, 4, but2)
                 y_+=1
 
@@ -1322,7 +1399,7 @@ class DateTimePicker(QWidget):
 
     def applyTheme(self):
         if self.themeNum == 0:
-            app.setStyleSheet("")
+            app.setStyleSheet("QWidget {color: black; }")
         elif self.themeNum == 1:
             apply_stylesheet(app, theme='dark_blue.xml')
         elif self.themeNum == 2:
@@ -1365,6 +1442,11 @@ class DateTimePicker(QWidget):
         else:
             sorted_tablo_veri = self.nameSortRet(tablo_veri)
         return sorted_tablo_veri
+    
+    def show_window(self, reason):
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            self.showNormal()
+            #self.activateWindow()
     
 if __name__ == '__main__':
     try:
