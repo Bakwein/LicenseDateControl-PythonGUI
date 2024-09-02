@@ -1,12 +1,14 @@
 # LicenseDateControl - PythonGUI Application
 License Deadline Date Control/Notification Application with using Python PyQt6
-### 1. MacOS - Tema 1 - Default Tema
+
+## Themes/Temalar
+### 1. MacOS - Theme/Tema 1 - Default Theme/Varsayılan Tema
 <img width="1339" alt="Ekran Resmi 2024-09-02 11 11 41" src="https://github.com/user-attachments/assets/2bc4edf1-4f79-4d98-af61-2f22d9fba288">
 
-### 2. MacOS - Tema 2 - Koyu Özel Tema
+### 2. MacOS - Theme/Tema 2 - Dark Custom Theme/Koyu Özel Tema
 <img width="1368" alt="Ekran Resmi 2024-09-02 11 12 34" src="https://github.com/user-attachments/assets/d43d89d4-3b87-4281-9e13-f2fe79cb7eac">
 
-### 3. MacOS - Tema 3 - Açık Özel Tema
+### 3. MacOS - Theme/Tema 3 - Light Custom ThemeAçık Özel Tema
 <img width="1368" alt="Ekran Resmi 2024-09-02 11 13 26" src="https://github.com/user-attachments/assets/80be17bf-2682-4c76-9383-5244d76dd25f">
 
 ### 4. Windows
