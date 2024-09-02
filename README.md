@@ -11,7 +11,7 @@ https://github.com/user-attachments/assets/574015f7-06c7-43cb-b6bf-9d58510078d1
 https://github.com/user-attachments/assets/f429d18c-34c5-402f-a15b-df4ab5e7ab93
 
 
-### Outputting The Table As Excel/Tabloyu Excel Olarak Çıktı Alma
+### Outputting the Table as Excel/Tabloyu Excel Olarak Çıktı Alma
 
 
 
@@ -34,5 +34,25 @@ https://github.com/user-attachments/assets/881a5195-caf0-4ce6-978a-92877735f6f2
 
 
 https://github.com/user-attachments/assets/0f7362d8-2db1-420d-bd49-f8bf67acd864
+
+### Notification/Bildirim
+
+https://github.com/user-attachments/assets/212c35c3-41d9-4af5-8cd0-65af91664d63
+
+### Delete Button/Silme Butonu
+
+
+
+https://github.com/user-attachments/assets/2a4ec0d1-73fd-4897-8e5a-c0ac76979714
+
+
+### Starting as the Computer Starts/Bilgisayar Başladığı Gibi Başlama
+![startup](https://github.com/user-attachments/assets/a7ed1f8c-96a9-426d-8b21-0c35d1e0321b)
+
+
+### Tray Icon
+
+![icon](https://github.com/user-attachments/assets/ec857d9d-0e97-4080-a65d-1b7b28d66131)
+
 
 
