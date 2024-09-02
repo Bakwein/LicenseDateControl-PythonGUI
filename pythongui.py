@@ -249,22 +249,24 @@ class DateTimePicker(QWidget):
 
         # giriş .db adında dosya oluşturma her girişte güncelleme
         try:
+            '''
             con = sqlite3.connect('giris_tablo.db')
             c = con.cursor()
-            c.execute('''
+            c.execute(''
                   CREATE TABLE IF NOT EXISTS tablo_verileri (
                   isim TEXT,
                   start TEXT,
                   end TEXT
-                  ) ''')
+                  ) '')
             c.execute("DELETE FROM tablo_verileri")
             for key,value in self.getAnaDict().items():
-                c.execute('''
+                c.execute(''
                 INSERT INTO tablo_verileri (isim, start, end)
                 VALUES (?,?,?)
-                ''',(key,value['start'], value['end']))
+                '',(key,value['start'], value['end']))
             con.commit()
             con.close()
+            '''
 
         except Exception as e:
             self.hataLabel.setText("Hata: Giriş Veri Tabanına Bağlanma Hatası")
