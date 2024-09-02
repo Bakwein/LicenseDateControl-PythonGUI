@@ -248,8 +248,9 @@ class DateTimePicker(QWidget):
             self.getAnaDict()[veri[0]] = {'name': veri[0], 'start': str(veri[1]), 'end': str(veri[2]) }
 
         # giriş .db adında dosya oluşturma her girişte güncelleme
+        '''
         try:
-            '''
+            
             con = sqlite3.connect('giris_tablo.db')
             c = con.cursor()
             c.execute(''
@@ -266,11 +267,11 @@ class DateTimePicker(QWidget):
                 '',(key,value['start'], value['end']))
             con.commit()
             con.close()
-            '''
 
         except Exception as e:
             self.hataLabel.setText("Hata: Giriş Veri Tabanına Bağlanma Hatası")
             return
+        '''
 
         #excel ve db dosyaları 1 ay geçmişse temizle
 
