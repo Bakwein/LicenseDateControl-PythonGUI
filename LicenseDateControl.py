@@ -88,7 +88,7 @@ pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui -
 
 pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui --hidden-import=PyQt6.QtWidgets --hidden-import plyer.platforms.win.notification  --noconsole pythongui.py
 
-pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui --hidden-import=PyQt6.QtWidgets --hidden-import=plyer.platforms.win.notification --hidden-import=plyer.platforms.macosx.notification --noconsole --icon=ico.ico pythongui.py
+pyinstaller --onefile --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui --hidden-import=PyQt6.QtWidgets --hidden-import=plyer.platforms.win.notification --hidden-import=plyer.platforms.macosx.notification --noconsole --icon=ico.ico LicenseDateControl.py
 
 '''
 '''
@@ -553,7 +553,7 @@ class DateTimePicker(QWidget):
 
     def excelImport(self):
         opt = QFileDialog.Option.ReadOnly
-        file_path, _ = QFileDialog.getOpenFileName(self, "Excel Dosyasını Seç", "","Excel Files (*.xlsx);;All Files (*)", options=opt)
+        file_path, _ = QFileDialog.getOpenFileName(self, "Excel Dosyasını Seç", "./excel_dosyalari","Excel Files (*.xlsx);;All Files (*)", options=opt)
         if file_path:
             try:
                 df = pd.read_excel(file_path, engine="openpyxl")
@@ -644,7 +644,7 @@ class DateTimePicker(QWidget):
             self.hataLabel.setText("Hata: Yazılacak Bilgi Yok!")
             return
         df.fillna('', inplace=True)
-        filename, _ = QFileDialog.getSaveFileName(self, "Excel dosyasını kaydet", "", "Excel Files (*.xlsx);;All Files (*)")
+        filename, _ = QFileDialog.getSaveFileName(self, "Excel dosyasını kaydet", "./excel_dosyalari", "Excel Files (*.xlsx);;All Files (*)")
         if filename:
             try:
                 df.to_excel(filename, index=False)
@@ -694,7 +694,7 @@ class DateTimePicker(QWidget):
         if df.size == 0:
             return
         df.fillna('', inplace=True)
-        filename, _ = QFileDialog.getSaveFileName(self, "Excel dosyasını kaydet", "", "Excel Files (*.xlsx);;All Files (*)")
+        filename, _ = QFileDialog.getSaveFileName(self, "Excel dosyasını kaydet", "./excel_dosyalari", "Excel Files (*.xlsx);;All Files (*)")
         if filename:
             try:
                 df.to_excel(filename, index=False)
@@ -1185,7 +1185,7 @@ class DateTimePicker(QWidget):
     def newDatabase(self):
         try:
             opt = QFileDialog.Option.ReadOnly
-            file_path, _ = QFileDialog.getOpenFileName(self, "Veritabanı dosyasını seç", "", "Database Files (*.db);;All Files (*)", options=opt)
+            file_path, _ = QFileDialog.getOpenFileName(self, "Veritabanı dosyasını seç", "./db_yedekleme", "Database Files (*.db);;All Files (*)", options=opt)
             if file_path:
                 con = sqlite3.connect(file_path)
                 df = pd.read_sql_query("SELECT * FROM tablo_verileri", con)
